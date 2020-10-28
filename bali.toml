@@ -1,0 +1,15 @@
+# https://toml.io/en/
+name = "zinc"
+version = "1.0.0"
+dirs = [
+    "cmd/zinc", # dirs
+    "cmd/zinc-balanced",
+    "cmd/zinc-secured",
+    "cmd/zinc-sshd",
+]
+
+[[files]]
+path = "LICENSE"
+destination = "share"
+newname = "copyright.txt"
+norename = true

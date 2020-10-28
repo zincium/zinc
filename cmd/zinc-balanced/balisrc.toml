@@ -1,0 +1,10 @@
+name = "zinc-balanced"
+description = "zinc-balanced - Redesigned Git Balance Service"
+destination = "bin"
+version = "1.0.0"
+versioninfo = "res/versioninfo.json"
+manifest = "res/zinc-balanced.manifest"
+goflags = [
+    "-ldflags",
+    "-X 'main.VERSION=$BUILD_VERSION' -X 'main.BUILDTIME=$BUILD_TIME' -X 'main.BUILDBRANCH=$BUILD_BRANCH' -X 'main.BUILDCOMMIT=$BUILD_COMMIT' -X 'main.GOVERSION=$BUILD_GOVERSION'",
+]

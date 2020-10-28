@@ -1,0 +1,10 @@
+name = "zinc-secured"
+description = "zinc-secured - Redesigned Git Transfer Service"
+destination = "bin"
+version = "1.0.0"
+versioninfo = "res/versioninfo.json"
+manifest = "res/zinc-secured.manifest"
+goflags = [
+    "-ldflags",
+    "-X 'main.VERSION=$BUILD_VERSION' -X 'main.BUILDTIME=$BUILD_TIME' -X 'main.BUILDBRANCH=$BUILD_BRANCH' -X 'main.BUILDCOMMIT=$BUILD_COMMIT' -X 'main.GOVERSION=$BUILD_GOVERSION'",
+]

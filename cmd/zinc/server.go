@@ -22,7 +22,7 @@ func (s *Server) ListenAndServe(listen string) error {
 	r.HandleFunc("/{user}/{repo}/info/refs", s.handleReceivePackRefs).Queries("service", "git-receive-pack").Methods("GET")
 	r.HandleFunc("/{user}/{repo}/git-upload-pack", s.handleUploadPack).Methods("POST")
 	r.HandleFunc("/{user}/{repo}/git-receive-pack", s.handleReceivePack).Methods("POST")
-	s.srv = &http.Server{listen: listen, Handler: r, IdleTimeout: s.IdleTimeout, ReadTimeout: s.ReadTimeout, WriteTimeout: s.WriteTimeout}
+	s.srv = &http.Server{Addr: listen, Handler: r, IdleTimeout: s.IdleTimeout, ReadTimeout: s.ReadTimeout, WriteTimeout: s.WriteTimeout}
 	return s.srv.ListenAndServe()
 }
 

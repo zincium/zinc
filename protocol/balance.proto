@@ -1,4 +1,5 @@
 // zin balance protocol
+// https://grpc.io/docs/languages/go/quickstart/
 
 syntax = "proto3";
 
@@ -6,8 +7,8 @@ option go_package = "github.com/zincium/zinc/protocol";
 
 package protocol;
 
-// The greeting service definition.
-service Greeter {
+// The balance service definition.
+service BalanceService {
     // Sends a greeting
     rpc SayHello (HelloRequest) returns (HelloReply) {}
   }

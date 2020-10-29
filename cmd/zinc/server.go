@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"time"
@@ -19,7 +20,7 @@ type ServerOptions struct {
 // Server server
 type Server struct {
 	r       *mux.Router
-	srv     *http.Server
+	s       *http.Server
 	options *ServerOptions
 }
 
@@ -39,6 +40,11 @@ func (srv *Server) handleReceivePack(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Shutdown shutdown
+func (srv *Server) Shutdown(ctx context.Context) error {
+	return srv.s.Shutdown(ctx)
+}
+
 // ListenAndServe listen and serve
 func (srv *Server) ListenAndServe(listen string) error {
 	r := mux.NewRouter()
@@ -47,14 +53,14 @@ func (srv *Server) ListenAndServe(listen string) error {
 	r.HandleFunc("/{user}/{repo}/git-upload-pack", srv.handleUploadPack).Methods("POST")
 	r.HandleFunc("/{user}/{repo}/git-receive-pack", srv.handleReceivePack).Methods("POST")
 	srv.r = r
-	srv.srv = &http.Server{
+	srv.s = &http.Server{
 		Addr:         listen,
 		Handler:      srv,
 		IdleTimeout:  srv.options.IdleTimeout,
 		ReadTimeout:  srv.options.ReadTimeout,
 		WriteTimeout: srv.options.WriteTimeout,
 	}
-	return srv.srv.ListenAndServe()
+	return srv.s.ListenAndServe()
 }
 
 // ServeHTTP serve HTTP

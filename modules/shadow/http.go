@@ -7,7 +7,7 @@ import (
 
 // ResponseWriter shadow ResponseWriter
 type ResponseWriter struct {
-	writer     http.ResponseWriter
+	http.ResponseWriter
 	rid        string
 	written    int64
 	startTime  time.Time
@@ -16,17 +16,12 @@ type ResponseWriter struct {
 
 // NewResponseWriter bind ResponseWriter
 func NewResponseWriter(w http.ResponseWriter) *ResponseWriter {
-	return &ResponseWriter{writer: w, rid: NewRID(), statusCode: http.StatusOK, startTime: time.Now()}
-}
-
-// Header get low layer header
-func (w *ResponseWriter) Header() http.Header {
-	return w.writer.Header()
+	return &ResponseWriter{ResponseWriter: w, rid: NewRID(), statusCode: http.StatusOK, startTime: time.Now()}
 }
 
 // Write data
 func (w *ResponseWriter) Write(data []byte) (int, error) {
-	written, err := w.writer.Write(data)
+	written, err := w.ResponseWriter.Write(data)
 	w.written += int64(written)
 	return written, err
 }
@@ -34,7 +29,7 @@ func (w *ResponseWriter) Write(data []byte) (int, error) {
 // WriteHeader write header statucode
 func (w *ResponseWriter) WriteHeader(statusCode int) {
 	w.statusCode = statusCode
-	w.writer.WriteHeader(statusCode)
+	w.ResponseWriter.WriteHeader(statusCode)
 }
 
 // StatusCode return statusCode

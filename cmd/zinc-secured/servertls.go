@@ -80,7 +80,9 @@ func (srv *ServerTLS) Serve(ln net.Listener) error {
 	if err != nil {
 		return err
 	}
+	//https://gist.github.com/denji/12b3a568f092ab951456
 	config := &tls.Config{
+		MinVersion:   tls.VersionTLS12,
 		Certificates: []tls.Certificate{cert},
 	}
 	srv.trackListener(ln, true)

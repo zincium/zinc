@@ -1,30 +1,27 @@
-package main
+package server
 
 import (
-	"crypto/tls"
+	"errors"
 	"net"
 	"sync"
 	"time"
 )
 
-// SecureOptions options
-type SecureOptions struct {
-	CertFile string
-	KeyFile  string
-}
+// ErrServerClosed define
+var ErrServerClosed = errors.New("git: Server closed")
 
-// ServerTLS tls server
-type ServerTLS struct {
+// Server server
+type Server struct {
+	Handler    func(conn net.Conn)
 	mu         sync.RWMutex
 	listenerWg sync.WaitGroup
 	listeners  map[net.Listener]struct{}
 	conns      map[net.Conn]struct{}
 	connWg     sync.WaitGroup
 	doneChan   chan struct{}
-	so         *SecureOptions
 }
 
-func (srv *ServerTLS) trackConn(c net.Conn, add bool) {
+func (srv *Server) trackConn(c net.Conn, add bool) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 
@@ -40,7 +37,7 @@ func (srv *ServerTLS) trackConn(c net.Conn, add bool) {
 	}
 }
 
-func (srv *ServerTLS) trackListener(ln net.Listener, add bool) {
+func (srv *Server) trackListener(ln net.Listener, add bool) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 
@@ -60,14 +57,14 @@ func (srv *ServerTLS) trackListener(ln net.Listener, add bool) {
 		srv.listenerWg.Done()
 	}
 }
-func (srv *ServerTLS) getDoneChanLocked() chan struct{} {
+func (srv *Server) getDoneChanLocked() chan struct{} {
 	if srv.doneChan == nil {
 		srv.doneChan = make(chan struct{})
 	}
 	return srv.doneChan
 }
 
-func (srv *ServerTLS) getDoneChan() <-chan struct{} {
+func (srv *Server) getDoneChan() <-chan struct{} {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 
@@ -75,16 +72,7 @@ func (srv *ServerTLS) getDoneChan() <-chan struct{} {
 }
 
 // Serve serve
-func (srv *ServerTLS) Serve(ln net.Listener) error {
-	cert, err := tls.LoadX509KeyPair(srv.so.CertFile, srv.so.KeyFile)
-	if err != nil {
-		return err
-	}
-	//https://gist.github.com/denji/12b3a568f092ab951456
-	config := &tls.Config{
-		MinVersion:   tls.VersionTLS12,
-		Certificates: []tls.Certificate{cert},
-	}
+func (srv *Server) Serve(ln net.Listener) error {
 	srv.trackListener(ln, true)
 	defer srv.trackListener(ln, false)
 	var tempDelay time.Duration
@@ -110,18 +98,12 @@ func (srv *ServerTLS) Serve(ln net.Listener) error {
 			}
 			return e
 		}
-		go func() {
-			c := tls.Server(conn, config)
-			if err := c.Handshake(); err != nil {
-				// LOG
-			}
-			srv.Handle(c)
-		}()
+		go srv.handle(conn)
 	}
 }
 
 // ListenAndServe listen and serve
-func (srv *ServerTLS) ListenAndServe(listen string) error {
+func (srv *Server) ListenAndServe(listen string) error {
 	ln, err := net.Listen("tcp", listen)
 	if err != nil {
 		return err
@@ -130,7 +112,7 @@ func (srv *ServerTLS) ListenAndServe(listen string) error {
 }
 
 // Handle handle
-func (srv *ServerTLS) Handle(conn net.Conn) error {
+func (srv *Server) handle(conn net.Conn) error {
 
 	return nil
 }

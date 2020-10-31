@@ -1,13 +1,9 @@
-package main
+package server
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/tls"
-	"crypto/x509"
-	"encoding/pem"
-	"math/big"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -15,18 +11,49 @@ import (
 	"github.com/lucas-clemente/quic-go"
 )
 
-// ServerQUIC quic
-type ServerQUIC struct {
+// QuicServer quic
+type QuicServer struct {
+	Handler    func(io.ReadWriter)
 	mu         sync.RWMutex
 	listenerWg sync.WaitGroup
 	listeners  map[quic.Listener]struct{}
 	conns      map[quic.Stream]struct{}
 	connWg     sync.WaitGroup
 	doneChan   chan struct{}
-	so         *SecureOptions
 }
 
-func (srv *ServerQUIC) trackConn(c quic.Stream, add bool) {
+type quicConn struct {
+	quic.Stream
+	localAddr  net.Addr
+	remoteAddr net.Addr
+}
+
+func (qc *quicConn) Close() error {
+
+	return nil
+}
+
+func (qc *quicConn) LocalAddr() net.Addr {
+	return qc.localAddr
+}
+
+func (qc *quicConn) RemoteAddr() net.Addr {
+	return qc.remoteAddr
+}
+
+func (qc *quicConn) SetDeadline(t time.Time) error {
+	return nil
+}
+
+func (qc *quicConn) SetReadDeadline(t time.Time) error {
+	return nil
+}
+
+func (qc *quicConn) SetWriteDeadline(t time.Time) error {
+	return nil
+}
+
+func (srv *QuicServer) trackConn(c quic.Stream, add bool) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 
@@ -42,7 +69,7 @@ func (srv *ServerQUIC) trackConn(c quic.Stream, add bool) {
 	}
 }
 
-func (srv *ServerQUIC) trackListener(ln quic.Listener, add bool) {
+func (srv *QuicServer) trackListener(ln quic.Listener, add bool) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 
@@ -62,45 +89,22 @@ func (srv *ServerQUIC) trackListener(ln quic.Listener, add bool) {
 		srv.listenerWg.Done()
 	}
 }
-func (srv *ServerQUIC) getDoneChanLocked() chan struct{} {
+func (srv *QuicServer) getDoneChanLocked() chan struct{} {
 	if srv.doneChan == nil {
 		srv.doneChan = make(chan struct{})
 	}
 	return srv.doneChan
 }
 
-func (srv *ServerQUIC) getDoneChan() <-chan struct{} {
+func (srv *QuicServer) getDoneChan() <-chan struct{} {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 
 	return srv.getDoneChanLocked()
 }
 
-func (srv *ServerQUIC) generateTLSConfig() *tls.Config {
-	key, err := rsa.GenerateKey(rand.Reader, 1024)
-	if err != nil {
-		panic(err)
-	}
-	template := x509.Certificate{SerialNumber: big.NewInt(1)}
-	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
-	if err != nil {
-		panic(err)
-	}
-	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
-	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
-
-	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
-	if err != nil {
-		panic(err)
-	}
-	return &tls.Config{
-		Certificates: []tls.Certificate{tlsCert},
-		NextProtos:   []string{"quic-echo-example"},
-	}
-}
-
 // Serve serve
-func (srv *ServerQUIC) Serve(ln quic.Listener) error {
+func (srv *QuicServer) Serve(ln quic.Listener) error {
 	srv.trackListener(ln, true)
 	defer srv.trackListener(ln, false)
 	var tempDelay time.Duration
@@ -126,18 +130,20 @@ func (srv *ServerQUIC) Serve(ln quic.Listener) error {
 			}
 			return e
 		}
-		go srv.Handle(conn)
+		go srv.handle(conn)
 	}
 }
 
-// ListenAndServe listen and serve
-func (srv *ServerQUIC) ListenAndServe(listen string) error {
-	cert, err := tls.LoadX509KeyPair(srv.so.CertFile, srv.so.KeyFile)
+// ListenAndServeQUIC listen and serve
+func (srv *QuicServer) ListenAndServeQUIC(listen string, certFile, keyFile string) error {
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		return err
 	}
 	config := &tls.Config{
+		MinVersion:   tls.VersionTLS13,
 		Certificates: []tls.Certificate{cert},
+		NextProtos:   []string{"quic-git"},
 	}
 	ln, err := quic.ListenAddr(listen, config, nil)
 	if err != nil {
@@ -147,7 +153,7 @@ func (srv *ServerQUIC) ListenAndServe(listen string) error {
 }
 
 // Handle handle
-func (srv *ServerQUIC) Handle(conn quic.Session) error {
+func (srv *QuicServer) handle(conn quic.Session) error {
 	sm, err := conn.AcceptStream(context.Background())
 	if err != nil {
 		return err
@@ -155,7 +161,9 @@ func (srv *ServerQUIC) Handle(conn quic.Session) error {
 	return srv.onStream(sm)
 }
 
-func (srv *ServerQUIC) onStream(sm quic.Stream) error {
-
+func (srv *QuicServer) onStream(sm quic.Stream) error {
+	if srv.Handler != nil {
+		srv.Handler(sm)
+	}
 	return nil
 }

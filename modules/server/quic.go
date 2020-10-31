@@ -29,11 +29,6 @@ type quicConn struct {
 	conn quic.Session
 }
 
-func (qc *quicConn) Close() error {
-
-	return nil
-}
-
 func (qc *quicConn) LocalAddr() net.Addr {
 	return qc.conn.LocalAddr()
 }
@@ -169,6 +164,9 @@ func (srv *QuicServer) handle(conn quic.Session) error {
 	sm, err := conn.AcceptStream(context.Background())
 	if err != nil {
 		return err
+	}
+	if srv.MaxTimeout != 0 {
+		sm.SetDeadline(time.Now().Add(srv.MaxTimeout))
 	}
 	srv.trackConn(sm, true)
 	defer srv.trackConn(sm, false)

@@ -125,13 +125,19 @@ func (srv *Server) Serve(ln net.Listener) error {
 			}
 			return e
 		}
-		go func() {
-			if srv.Handler != nil {
-				srv.trackConn(conn, true)
-				defer srv.trackConn(conn, false)
-				srv.Handler(conn)
-			}
-		}()
+		go srv.handle(conn)
+	}
+}
+
+func (srv *Server) handle(conn net.Conn) {
+	srv.trackConn(conn, true)
+	defer srv.trackConn(conn, false)
+
+	if srv.MaxTimeout != 0 {
+		conn.SetDeadline(time.Now().Add(srv.MaxTimeout))
+	}
+	if srv.Handler != nil {
+		srv.Handler(conn)
 	}
 }
 

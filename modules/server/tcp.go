@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"net"
 	"sync"
@@ -12,13 +13,16 @@ var ErrServerClosed = errors.New("git: Server closed")
 
 // Server server
 type Server struct {
-	Handler    func(conn net.Conn)
-	mu         sync.RWMutex
-	listenerWg sync.WaitGroup
-	listeners  map[net.Listener]struct{}
-	conns      map[net.Conn]struct{}
-	connWg     sync.WaitGroup
-	doneChan   chan struct{}
+	Handler      func(conn net.Conn)
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	MaxTimeout   time.Duration
+	mu           sync.RWMutex
+	listenerWg   sync.WaitGroup
+	listeners    map[net.Listener]struct{}
+	conns        map[net.Conn]struct{}
+	connWg       sync.WaitGroup
+	doneChan     chan struct{}
 }
 
 func (srv *Server) trackConn(c net.Conn, add bool) {
@@ -71,6 +75,29 @@ func (srv *Server) getDoneChan() <-chan struct{} {
 	return srv.getDoneChanLocked()
 }
 
+func (srv *Server) closeListenersLocked() error {
+	var err error
+	for ln := range srv.listeners {
+		if cerr := ln.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+		delete(srv.listeners, ln)
+	}
+	return err
+}
+
+func (srv *Server) closeDoneChanLocked() {
+	ch := srv.getDoneChanLocked()
+	select {
+	case <-ch:
+		// Already closed. Don't close again.
+	default:
+		// Safe to close here. We're the only closer, guarded
+		// by srv.mu.
+		close(ch)
+	}
+}
+
 // Serve serve
 func (srv *Server) Serve(ln net.Listener) error {
 	srv.trackListener(ln, true)
@@ -98,7 +125,13 @@ func (srv *Server) Serve(ln net.Listener) error {
 			}
 			return e
 		}
-		go srv.handle(conn)
+		go func() {
+			if srv.Handler != nil {
+				srv.trackConn(conn, true)
+				defer srv.trackConn(conn, false)
+				srv.Handler(conn)
+			}
+		}()
 	}
 }
 
@@ -111,8 +144,24 @@ func (srv *Server) ListenAndServe(listen string) error {
 	return srv.Serve(ln)
 }
 
-// Handle handle
-func (srv *Server) handle(conn net.Conn) error {
+//Shutdown todo
+func (srv *Server) Shutdown(ctx context.Context) error {
+	srv.mu.Lock()
+	lnerr := srv.closeListenersLocked()
+	srv.closeDoneChanLocked()
+	srv.mu.Unlock()
 
-	return nil
+	finished := make(chan struct{}, 1)
+	go func() {
+		srv.listenerWg.Wait()
+		srv.connWg.Wait()
+		finished <- struct{}{}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-finished:
+		return lnerr
+	}
 }

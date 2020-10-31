@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"crypto/tls"
-	"io"
 	"net"
 	"sync"
 	"time"
@@ -13,19 +12,21 @@ import (
 
 // QuicServer quic
 type QuicServer struct {
-	Handler    func(io.ReadWriter)
-	mu         sync.RWMutex
-	listenerWg sync.WaitGroup
-	listeners  map[quic.Listener]struct{}
-	conns      map[quic.Stream]struct{}
-	connWg     sync.WaitGroup
-	doneChan   chan struct{}
+	Handler      func(net.Conn)
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	MaxTimeout   time.Duration
+	mu           sync.RWMutex
+	listenerWg   sync.WaitGroup
+	listeners    map[quic.Listener]struct{}
+	conns        map[quic.Stream]struct{}
+	connWg       sync.WaitGroup
+	doneChan     chan struct{}
 }
 
 type quicConn struct {
 	quic.Stream
-	localAddr  net.Addr
-	remoteAddr net.Addr
+	conn quic.Session
 }
 
 func (qc *quicConn) Close() error {
@@ -34,23 +35,11 @@ func (qc *quicConn) Close() error {
 }
 
 func (qc *quicConn) LocalAddr() net.Addr {
-	return qc.localAddr
+	return qc.conn.LocalAddr()
 }
 
 func (qc *quicConn) RemoteAddr() net.Addr {
-	return qc.remoteAddr
-}
-
-func (qc *quicConn) SetDeadline(t time.Time) error {
-	return nil
-}
-
-func (qc *quicConn) SetReadDeadline(t time.Time) error {
-	return nil
-}
-
-func (qc *quicConn) SetWriteDeadline(t time.Time) error {
-	return nil
+	return qc.conn.RemoteAddr()
 }
 
 func (srv *QuicServer) trackConn(c quic.Stream, add bool) {
@@ -101,6 +90,29 @@ func (srv *QuicServer) getDoneChan() <-chan struct{} {
 	defer srv.mu.Unlock()
 
 	return srv.getDoneChanLocked()
+}
+
+func (srv *QuicServer) closeDoneChanLocked() {
+	ch := srv.getDoneChanLocked()
+	select {
+	case <-ch:
+		// Already closed. Don't close again.
+	default:
+		// Safe to close here. We're the only closer, guarded
+		// by srv.mu.
+		close(ch)
+	}
+}
+
+func (srv *QuicServer) closeListenersLocked() error {
+	var err error
+	for ln := range srv.listeners {
+		if cerr := ln.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+		delete(srv.listeners, ln)
+	}
+	return err
 }
 
 // Serve serve
@@ -158,12 +170,33 @@ func (srv *QuicServer) handle(conn quic.Session) error {
 	if err != nil {
 		return err
 	}
-	return srv.onStream(sm)
-}
-
-func (srv *QuicServer) onStream(sm quic.Stream) error {
+	srv.trackConn(sm, true)
+	defer srv.trackConn(sm, false)
+	qc := &quicConn{Stream: sm, conn: conn}
 	if srv.Handler != nil {
-		srv.Handler(sm)
+		srv.Handler(qc)
 	}
 	return nil
+}
+
+//Shutdown todo
+func (srv *QuicServer) Shutdown(ctx context.Context) error {
+	srv.mu.Lock()
+	lnerr := srv.closeListenersLocked()
+	srv.closeDoneChanLocked()
+	srv.mu.Unlock()
+
+	finished := make(chan struct{}, 1)
+	go func() {
+		srv.listenerWg.Wait()
+		srv.connWg.Wait()
+		finished <- struct{}{}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-finished:
+		return lnerr
+	}
 }

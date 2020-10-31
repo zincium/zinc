@@ -13,8 +13,8 @@ type Expander struct {
 	mu sync.RWMutex
 }
 
-// APPDIR todo
-func APPDIR() string {
+// AppDir todo
+func AppDir() string {
 	exe, err := os.Executable()
 	if err != nil {
 		return "."
@@ -29,8 +29,8 @@ func APPDIR() string {
 // NewExpander new expander
 func NewExpander() *Expander {
 	e := &Expander{m: make(map[string]string)}
-	if APPDIR := APPDIR(); APPDIR != "." {
-		e.m["APPDIR"] = APPDIR
+	if appdir := AppDir(); appdir != "." {
+		e.m["APPDIR"] = appdir
 	}
 	return e
 }

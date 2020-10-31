@@ -13,3 +13,31 @@ path = "LICENSE"
 destination = "share"
 newname = "copyright.txt"
 norename = true
+
+[[files]]
+path = "config/server.crt"
+destination = "config"
+
+[[files]]
+path = "config/server.key"
+destination = "config"
+
+[[files]]
+path = "config/zinc-balanced.toml"
+destination = "config"
+
+[[files]]
+path = "config/zinc-secured.toml"
+destination = "config"
+
+[[files]]
+path = "config/zinc-sshd.toml"
+destination = "config"
+
+[[files]]
+path = "config/zinc.toml"
+destination = "config"
+
+[[files]]
+path = "config/ssh/id_ed25519"
+destination = "config/ssh"

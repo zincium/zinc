@@ -21,11 +21,11 @@ var (
 
 // Server server
 type Server struct {
-	Root        string // repositories root
-	GitPath     string // git or /path/to/git
-	SecureToken string // secure token ?token=xxx&expired=yyyy
-	srv         *server.Server
-	qsrv        *server.QuicServer
+	Root    string // repositories root
+	GitPath string // git or /path/to/git
+	srv     *server.Server
+	tlssrv  *server.Server
+	qsrv    *server.QuicServer
 }
 
 // Request request
@@ -76,6 +76,10 @@ func (srv *Server) Handle(conn net.Conn) {
 		enc.Encodef("Protocol error: %v", dec.Err())
 		return
 	}
-	pkl := dec.Bytes()
-	fmt.Fprintf(os.Stderr, "%v", pkl)
+	req, err := ResolveRequest(dec.Bytes())
+	if err != nil {
+		enc.EncodeString(err.Error())
+		return
+	}
+	fmt.Fprintf(os.Stderr, "git-%s %s\n", req.Service, req.Path)
 }

@@ -17,6 +17,10 @@ var (
 	ErrSasTokenNotMatch = errors.New("shared access signature token not match")
 )
 
+// Validator interface
+type Validator interface {
+}
+
 func blake3New() hash.Hash {
 	return blake3.New()
 }

@@ -12,29 +12,15 @@ import (
 
 // QuicServer quic
 type QuicServer struct {
-	Handler      func(net.Conn)
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	MaxTimeout   time.Duration
-	mu           sync.RWMutex
-	listenerWg   sync.WaitGroup
-	listeners    map[quic.Listener]struct{}
-	conns        map[quic.Stream]struct{}
-	connWg       sync.WaitGroup
-	doneChan     chan struct{}
-}
-
-type quicConn struct {
-	quic.Stream
-	conn quic.Session
-}
-
-func (qc *quicConn) LocalAddr() net.Addr {
-	return qc.conn.LocalAddr()
-}
-
-func (qc *quicConn) RemoteAddr() net.Addr {
-	return qc.conn.RemoteAddr()
+	Handler     func(net.Conn)
+	IdleTimeout time.Duration
+	MaxTimeout  time.Duration
+	mu          sync.RWMutex
+	listenerWg  sync.WaitGroup
+	listeners   map[quic.Listener]struct{}
+	conns       map[quic.Stream]struct{}
+	connWg      sync.WaitGroup
+	doneChan    chan struct{}
 }
 
 func (srv *QuicServer) trackConn(c quic.Stream, add bool) {
@@ -165,12 +151,13 @@ func (srv *QuicServer) handle(conn quic.Session) error {
 	if err != nil {
 		return err
 	}
-	if srv.MaxTimeout != 0 {
-		sm.SetDeadline(time.Now().Add(srv.MaxTimeout))
-	}
+
 	srv.trackConn(sm, true)
 	defer srv.trackConn(sm, false)
-	qc := &quicConn{Stream: sm, conn: conn}
+	qc := &quicConn{Stream: sm, conn: conn, idleTimeout: srv.IdleTimeout}
+	if srv.MaxTimeout != 0 {
+		qc.maxDeadline = time.Now().Add(srv.MaxTimeout)
+	}
 	if srv.Handler != nil {
 		srv.Handler(qc)
 	}

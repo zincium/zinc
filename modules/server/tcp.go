@@ -13,16 +13,15 @@ var ErrServerClosed = errors.New("git: Server closed")
 
 // Server server
 type Server struct {
-	Handler      func(conn net.Conn)
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	MaxTimeout   time.Duration
-	mu           sync.RWMutex
-	listenerWg   sync.WaitGroup
-	listeners    map[net.Listener]struct{}
-	conns        map[net.Conn]struct{}
-	connWg       sync.WaitGroup
-	doneChan     chan struct{}
+	Handler     func(conn net.Conn)
+	MaxTimeout  time.Duration
+	IdleTimeout time.Duration
+	mu          sync.RWMutex
+	listenerWg  sync.WaitGroup
+	listeners   map[net.Listener]struct{}
+	conns       map[net.Conn]struct{}
+	connWg      sync.WaitGroup
+	doneChan    chan struct{}
 }
 
 func (srv *Server) trackConn(c net.Conn, add bool) {
@@ -132,12 +131,12 @@ func (srv *Server) Serve(ln net.Listener) error {
 func (srv *Server) handle(conn net.Conn) {
 	srv.trackConn(conn, true)
 	defer srv.trackConn(conn, false)
-
+	sconn := &serverConn{Conn: conn, idleTimeout: srv.IdleTimeout}
 	if srv.MaxTimeout != 0 {
-		conn.SetDeadline(time.Now().Add(srv.MaxTimeout))
+		sconn.maxDeadline = time.Now().Add(srv.MaxTimeout)
 	}
 	if srv.Handler != nil {
-		srv.Handler(conn)
+		srv.Handler(sconn)
 	}
 }
 

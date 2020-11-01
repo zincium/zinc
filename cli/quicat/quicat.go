@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -36,7 +37,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "unable dial(quic) %s : %v", address, err)
 		os.Exit(1)
 	}
-	stream, err := session.OpenStream()
+	stream, err := session.OpenStreamSync(context.Background())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "unable open stream %s : %v", address, err)
 		os.Exit(1)

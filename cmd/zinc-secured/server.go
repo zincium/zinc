@@ -45,6 +45,8 @@ type Request struct {
 
 // ListenAndServe todo
 func (srv *Server) ListenAndServe(opts *Options) error {
+	// srv.GitPath = opts.GitPath
+	// srv.Root = opts.Root
 	var wg sync.WaitGroup
 	wg.Add(1)
 	srv.srv = &server.Server{
@@ -112,7 +114,9 @@ func (srv *Server) readRequest(conn net.Conn) (*Request, error) {
 		Service: strings.TrimPrefix(service, "git-"),
 		Host:    string(parts[1]),
 	}
-	u, err := url.Parse("git://" + req.Host + string(p0[pos+1]))
+	// path start with '/'
+	u, err := url.Parse("git://" + req.Host + string(p0[pos+1:]))
+	base.DbgPrint("URL: %s", u)
 	if err != nil {
 		return nil, err
 	}
@@ -143,20 +147,24 @@ func (srv *Server) Handle(conn net.Conn) {
 	if len(req.Version) != 0 {
 		cmd.Env = append(cmd.Env, "GIT_PROTOCOL="+req.Version)
 	}
+	base.DbgPrint("cmd: %v\n%v", cmd.Args, req)
 	in, err := cmd.StdinPipe()
 	if err != nil {
+		base.DbgPrint("unable create stdin: %v", err)
 		enc.EncodeString("internal server error")
 		return
 	}
 	defer in.Close()
 	out, err := cmd.StdoutPipe()
 	if err != nil {
+		base.DbgPrint("unable create stdout: %v", err)
 		enc.EncodeString("internal server error")
 		return
 	}
 	defer out.Close()
 	if err := cmd.Start(); err != nil {
 		// recored error
+		base.DbgPrint("unable create process: %v", err)
 		enc.EncodeString("internal server error")
 		return
 	}
@@ -165,18 +173,17 @@ func (srv *Server) Handle(conn net.Conn) {
 	}()
 	var wg sync.WaitGroup
 	wg.Add(2)
-	wg.Wait()
 	go func() {
 		defer wg.Done()
 		if _, err := base.Copy(conn, out); err != nil {
-
+			base.DbgPrint("unable create stdin: %v", err)
 		}
 	}()
 	go func() {
 		defer wg.Done()
 		if _, err := base.Copy(in, conn); err != nil {
-
+			base.DbgPrint("unable create stdin: %v", err)
 		}
 	}()
-
+	wg.Wait()
 }

@@ -47,6 +47,7 @@ usage: %s <option> url
 // Options base
 type Options struct {
 	Listen         string `toml:"Listen"`
+	GitPath        string `toml:"GitPath,omitempty"`
 	Root           string `toml:"Root"`
 	IdleTimeout    string `toml:"IdleTimeout,omitempty"`
 	idleTimeout    time.Duration
@@ -74,6 +75,9 @@ func (opts *Options) Initialize(expander *env.Expander) error {
 	opts.CertificateKey = expander.PathExpand(opts.CertificateKey)
 	opts.idleTimeout = cast.ToDuration(opts.IdleTimeout)
 	opts.maxTimeout = cast.ToDuration(opts.maxTimeout)
+	if opts.GitPath == "" {
+		opts.GitPath = "git"
+	}
 	return nil
 }
 

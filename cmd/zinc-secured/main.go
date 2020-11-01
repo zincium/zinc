@@ -13,6 +13,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "ParseArgv: %v\n", err)
 		os.Exit(1)
 	}
-	var srv Server
+	srv := &Server{GitPath: opts.GitPath, Root: opts.Root}
 	_ = srv.ListenAndServe(&opts)
 }

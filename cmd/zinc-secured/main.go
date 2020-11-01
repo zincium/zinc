@@ -13,5 +13,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "ParseArgv: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Fprintf(os.Stderr, "%v\n", opts)
+	var srv Server
+	_ = srv.ListenAndServe(&opts)
 }

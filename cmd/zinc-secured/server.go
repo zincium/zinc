@@ -43,6 +43,53 @@ type Request struct {
 	Query   url.Values
 }
 
+// ListenAndServe todo
+func (srv *Server) ListenAndServe(opts *Options) error {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	srv.srv = &server.Server{
+		Handler:     srv.Handle,
+		MaxTimeout:  opts.maxTimeout,
+		IdleTimeout: opts.idleTimeout,
+	}
+	go func() {
+		defer wg.Done()
+		if err := srv.srv.ListenAndServe(opts.Listen); err != nil {
+
+		}
+	}()
+	if opts.TLSListen != "" {
+		wg.Add(1)
+		srv.tlssrv = &server.Server{
+			Handler:     srv.Handle,
+			MaxTimeout:  opts.maxTimeout,
+			IdleTimeout: opts.idleTimeout,
+		}
+		go func() {
+			defer wg.Done()
+			if err := srv.tlssrv.ListenAndServeTLS(opts.Listen, opts.Certificate, opts.CertificateKey); err != nil {
+
+			}
+		}()
+	}
+	if opts.QUICListen != "" {
+		wg.Add(1)
+		srv.qsrv = &server.QuicServer{
+			Handler:     srv.Handle,
+			MaxTimeout:  opts.maxTimeout,
+			IdleTimeout: opts.idleTimeout,
+		}
+		go func() {
+			defer wg.Done()
+			if err := srv.qsrv.ListenAndServeQUIC(opts.Listen, opts.Certificate, opts.CertificateKey); err != nil {
+
+			}
+		}()
+	}
+	wg.Wait()
+	return nil
+}
+
 func (srv *Server) readRequest(conn net.Conn) (*Request, error) {
 	dec := pktline.NewScanner(conn)
 	if !dec.Scan() {

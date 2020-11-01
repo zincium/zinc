@@ -6,6 +6,7 @@ dirs = [
     "cmd/zinc-balanced",
     "cmd/zinc-secured",
     "cmd/zinc-sshd",
+    "cli/quicat",
 ]
 
 [[files]]

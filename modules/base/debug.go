@@ -3,6 +3,7 @@ package base
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 // defined
@@ -16,4 +17,10 @@ func DbgPrint(format string, a ...interface{}) {
 		ss := fmt.Sprintf(format, a...)
 		_, _ = os.Stderr.Write(BufferCat("\x1b[33m* ", ss, "\x1b[0m\n"))
 	}
+}
+
+// IsTrue fun
+func IsTrue(s string) bool {
+	lower := strings.ToLower(s)
+	return lower == "true" || lower == "yes" || lower == "on" || lower == "1"
 }

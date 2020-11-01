@@ -22,5 +22,5 @@ func main() {
 		os.Exit(1)
 	}
 	srv := &Server{GitPath: opts.GitPath, Root: opts.Root}
-	_ = srv.ListenAndServe(&opts)
+	srv.ListenAndServe(&opts)
 }

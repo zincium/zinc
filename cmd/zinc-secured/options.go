@@ -46,7 +46,7 @@ usage: %s <option> url
 
 // Options base
 type Options struct {
-	Listen         string `toml:"Listen"`
+	Listen         string `toml:"Listen,omitempty"`
 	GitPath        string `toml:"GitPath,omitempty"`
 	Root           string `toml:"Root"`
 	IdleTimeout    string `toml:"IdleTimeout,omitempty"`

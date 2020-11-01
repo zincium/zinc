@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -43,53 +44,79 @@ type Request struct {
 	Query   url.Values
 }
 
-// ListenAndServe todo
-func (srv *Server) ListenAndServe(opts *Options) error {
-	// srv.GitPath = opts.GitPath
-	// srv.Root = opts.Root
+// Shutdown shutdown
+func (srv *Server) Shutdown(ctx context.Context) error {
 	var wg sync.WaitGroup
-	wg.Add(1)
-	srv.srv = &server.Server{
-		Handler:     srv.Handle,
-		MaxTimeout:  opts.maxTimeout,
-		IdleTimeout: opts.idleTimeout,
-	}
+	wg.Add(3)
 	go func() {
 		defer wg.Done()
-		if err := srv.srv.ListenAndServe(opts.Listen); err != nil {
-
+		if srv.srv == nil {
+			return
+		}
+		if err := srv.srv.Shutdown(ctx); err != nil {
+			sugar.Errorf("shutdown git over tcp service: %v", err)
 		}
 	}()
-	if opts.TLSListen != "" {
-		wg.Add(1)
-		srv.tlssrv = &server.Server{
-			Handler:     srv.Handle,
-			MaxTimeout:  opts.maxTimeout,
-			IdleTimeout: opts.idleTimeout,
+	go func() {
+		defer wg.Done()
+		if srv.tlssrv == nil {
+			return
 		}
-		go func() {
-			defer wg.Done()
-			if err := srv.tlssrv.ListenAndServeTLS(opts.Listen, opts.Certificate, opts.CertificateKey); err != nil {
-
-			}
-		}()
-	}
-	if opts.QUICListen != "" {
-		wg.Add(1)
-		srv.qsrv = &server.QuicServer{
-			Handler:     srv.Handle,
-			MaxTimeout:  opts.maxTimeout,
-			IdleTimeout: opts.idleTimeout,
+		if err := srv.tlssrv.Shutdown(ctx); err != nil {
+			sugar.Errorf("shutdown git over tls service: %v", err)
 		}
-		go func() {
-			defer wg.Done()
-			if err := srv.qsrv.ListenAndServeQUIC(opts.Listen, opts.Certificate, opts.CertificateKey); err != nil {
-
-			}
-		}()
-	}
-	wg.Wait()
+	}()
+	go func() {
+		defer wg.Done()
+		if srv.qsrv == nil {
+			return
+		}
+		if err := srv.qsrv.Shutdown(ctx); err != nil {
+			sugar.Errorf("shutdown git over quic service: %v", err)
+		}
+	}()
 	return nil
+}
+
+// ListenAndServe todo
+func (srv *Server) ListenAndServe(opts *Options) {
+	var wg sync.WaitGroup
+	srv.srv = &server.Server{Handler: srv.Handle, MaxTimeout: opts.maxTimeout, IdleTimeout: opts.idleTimeout}
+	srv.tlssrv = &server.Server{Handler: srv.Handle, MaxTimeout: opts.maxTimeout, IdleTimeout: opts.idleTimeout}
+	srv.qsrv = &server.QuicServer{Handler: srv.Handle, MaxTimeout: opts.maxTimeout, IdleTimeout: opts.idleTimeout}
+	wg.Add(3)
+	go func() {
+		defer wg.Done()
+		if opts.Listen == "" {
+			return
+		}
+		sugar.Infof("listen %s (tcp)", opts.Listen)
+		if err := srv.srv.ListenAndServe(opts.Listen); err != nil && err != server.ErrServerClosed {
+			sugar.Fatalf("ListenAndServe tcp://%s error: %v", opts.Listen, err)
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		if opts.TLSListen == "" {
+			return
+		}
+		sugar.Infof("listen %s (tls)", opts.TLSListen)
+		if err := srv.tlssrv.ListenAndServeTLS(opts.TLSListen, opts.Certificate, opts.CertificateKey); err != nil && err != server.ErrServerClosed {
+			sugar.Fatalf("ListenAndServe tls://%s error: %v", opts.TLSListen, err)
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		if opts.QUICListen == "" {
+			return
+		}
+		sugar.Infof("listen %s (quic)", opts.QUICListen)
+		if err := srv.qsrv.ListenAndServeQUIC(opts.QUICListen, opts.Certificate, opts.CertificateKey); err != nil && err != server.ErrServerClosed {
+			sugar.Fatalf("ListenAndServe quic://%s error: %v", opts.QUICListen, err)
+		}
+	}()
+	wg.Wait()
+	sugar.Infof("zinc-secured git (tcp/tls/quic) server exited")
 }
 
 func (srv *Server) readRequest(conn net.Conn) (*Request, error) {
@@ -108,7 +135,7 @@ func (srv *Server) readRequest(conn net.Conn) (*Request, error) {
 	}
 	service := string(p0[0:pos])
 	if service != "git-upload-pack" && service != "git-receive-pack" && service != "git-upload-archive" {
-		return nil, fmt.Errorf("unsupport git service %s", service)
+		return nil, fmt.Errorf("unsupported git service %s", service)
 	}
 	req := &Request{
 		Service: strings.TrimPrefix(service, "git-"),
@@ -116,7 +143,6 @@ func (srv *Server) readRequest(conn net.Conn) (*Request, error) {
 	}
 	// path start with '/'
 	u, err := url.Parse("git://" + req.Host + string(p0[pos+1:]))
-	base.DbgPrint("URL: %s", u)
 	if err != nil {
 		return nil, err
 	}
@@ -136,6 +162,7 @@ func (srv *Server) Handle(conn net.Conn) {
 	enc := pktline.NewEncoder(conn)
 	req, err := srv.readRequest(conn)
 	if err != nil {
+		sugar.Warnf("read %v request error: %v", conn.RemoteAddr(), err)
 		enc.EncodeString(err.Error())
 		return
 	}
@@ -151,21 +178,21 @@ func (srv *Server) Handle(conn net.Conn) {
 	base.DbgPrint("cmd: %v\n%v", cmd.Args, req)
 	in, err := cmd.StdinPipe()
 	if err != nil {
-		base.DbgPrint("unable create stdin: %v", err)
+		sugar.Errorf("create stdin pipe: %v", err)
 		enc.EncodeString("internal server error")
 		return
 	}
 	defer in.Close()
 	out, err := cmd.StdoutPipe()
 	if err != nil {
-		base.DbgPrint("unable create stdout: %v", err)
+		sugar.Errorf("create stdout pipe: %v", err)
 		enc.EncodeString("internal server error")
 		return
 	}
 	defer out.Close()
 	if err := cmd.Start(); err != nil {
 		// recored error
-		base.DbgPrint("unable create process: %v", err)
+		sugar.Errorf("unable create process: %v", err)
 		enc.EncodeString("internal server error")
 		return
 	}
@@ -177,13 +204,13 @@ func (srv *Server) Handle(conn net.Conn) {
 	go func() {
 		defer wg.Done()
 		if _, err := base.Copy(conn, out); err != nil {
-			base.DbgPrint("unable create stdin: %v", err)
+			sugar.Debugf("copy out to conn: %v", err)
 		}
 	}()
 	go func() {
 		defer wg.Done()
 		if _, err := base.Copy(in, conn); err != nil {
-			base.DbgPrint("unable create stdin: %v", err)
+			sugar.Debugf("copy stdin to conn: %v", err)
 		}
 	}()
 	wg.Wait()

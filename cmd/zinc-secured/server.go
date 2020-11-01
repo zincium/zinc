@@ -7,9 +7,15 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/go-git/go-git/v5/plumbing/format/pktline"
+	"github.com/zincium/zinc/modules/base"
+	"github.com/zincium/zinc/modules/env"
+	"github.com/zincium/zinc/modules/process"
 	"github.com/zincium/zinc/modules/server"
 )
 
@@ -37,9 +43,12 @@ type Request struct {
 	Query   url.Values
 }
 
-//ResolveRequest resolve request
-func ResolveRequest(payload []byte) (*Request, error) {
-	parts := bytes.Split(payload, null)
+func (srv *Server) readRequest(conn net.Conn) (*Request, error) {
+	dec := pktline.NewScanner(conn)
+	if !dec.Scan() {
+		return nil, dec.Err()
+	}
+	parts := bytes.Split(dec.Bytes(), null)
 	if len(parts) < 2 {
 		return nil, ErrMalformedNetworkData
 	}
@@ -60,7 +69,10 @@ func ResolveRequest(payload []byte) (*Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Path = u.Path
+	req.Path = filepath.Join(srv.Root, u.Path)
+	if _, err := os.Stat(req.Path); err != nil && os.IsNotExist(err) {
+		return nil, fmt.Errorf("repository '%s' not found", u.Path)
+	}
 	req.Query = u.Query()
 	if len(parts) > 4 {
 		req.Version = string(parts[3])
@@ -71,15 +83,53 @@ func ResolveRequest(payload []byte) (*Request, error) {
 // Handle on handle
 func (srv *Server) Handle(conn net.Conn) {
 	enc := pktline.NewEncoder(conn)
-	dec := pktline.NewScanner(conn)
-	if !dec.Scan() {
-		enc.Encodef("Protocol error: %v", dec.Err())
-		return
-	}
-	req, err := ResolveRequest(dec.Bytes())
+	req, err := srv.readRequest(conn)
 	if err != nil {
 		enc.EncodeString(err.Error())
 		return
 	}
-	fmt.Fprintf(os.Stderr, "git-%s %s\n", req.Service, req.Path)
+	cmd := exec.Command(srv.GitPath,
+		"-c", "receive.denyDeleteCurrent=false",
+		req.Service,
+		req.Path)
+	cmd.Env = append(cmd.Env, env.Environ()...)
+	if len(req.Version) != 0 {
+		cmd.Env = append(cmd.Env, "GIT_PROTOCOL="+req.Version)
+	}
+	in, err := cmd.StdinPipe()
+	if err != nil {
+		enc.EncodeString("internal server error")
+		return
+	}
+	defer in.Close()
+	out, err := cmd.StdoutPipe()
+	if err != nil {
+		enc.EncodeString("internal server error")
+		return
+	}
+	defer out.Close()
+	if err := cmd.Start(); err != nil {
+		// recored error
+		enc.EncodeString("internal server error")
+		return
+	}
+	defer func() {
+		_ = process.Finalize(cmd)
+	}()
+	var wg sync.WaitGroup
+	wg.Add(2)
+	wg.Wait()
+	go func() {
+		defer wg.Done()
+		if _, err := base.Copy(conn, out); err != nil {
+
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		if _, err := base.Copy(in, conn); err != nil {
+
+		}
+	}()
+
 }

@@ -1,17 +1,17 @@
 package main
 
-// zinc-secured
-
-// version info
-var (
-	VERSION       = "1.0"
-	BUILDTIME     string
-	BUILDCOMMIT   string
-	BUILDBRANCH   string
-	GOVERSION     string
-	ServerVersion = "Zinc/" + VERSION
+import (
+	"fmt"
+	"os"
 )
 
-func main() {
+// zinc-secured
 
+func main() {
+	var opts Options
+	if err := opts.ParseArgv(); err != nil {
+		fmt.Fprintf(os.Stderr, "ParseArgv: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Fprintf(os.Stderr, "%v\n", opts)
 }

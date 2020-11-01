@@ -1,5 +1,6 @@
 # zinc-secured config
 Listen = "127.0.0.1:9418"
+Root = "D:\\Temp\\root"
 IdleTimeout = "120m"
 MaxTiemout = "1h"
 # Git over TLS

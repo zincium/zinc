@@ -72,3 +72,8 @@ func (e *Expander) Getenv(k string) string {
 func (e *Expander) Expand(s string) string {
 	return os.Expand(s, e.Getenv)
 }
+
+// PathExpand path expand
+func (e *Expander) PathExpand(s string) string {
+	return filepath.FromSlash(os.Expand(s, e.Getenv))
+}

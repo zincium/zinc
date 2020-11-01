@@ -9,6 +9,7 @@ require (
 	github.com/golang/protobuf v1.4.3
 	github.com/gorilla/mux v1.8.0
 	github.com/lucas-clemente/quic-go v0.18.1
+	github.com/pelletier/go-toml v1.8.1
 	github.com/zeebo/blake3 v0.1.0
 	google.golang.org/grpc v1.33.1
 	google.golang.org/protobuf v1.25.0

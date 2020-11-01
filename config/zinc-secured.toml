@@ -1,13 +1,10 @@
 # zinc-secured config
-[core]
-listen = "127.0.0.1:9418"
-
-[tls]
-listen = "127.0.0.1:9419"
-certfile = "${APPDIR}/config/server.crt"
-keyfile = "${APPDIR}/config/server.key"
-
-[quic]
-listen = "127.0.0.1:9420"
-certfile = "${APPDIR}/config/server.crt"
-keyfile = "${APPDIR}/config/server.key"
+Listen = "127.0.0.1:9418"
+IdleTimeout = "120m"
+MaxTiemout = "1h"
+# Git over TLS
+TlsListen = "127.0.0.1:9419"
+# Git over QUIC
+QuicListen = "127.0.0.1:9420"
+Certificate = "${APPDIR}/config/server.crt"
+CertificateKey = "${APPDIR}/config/server.key"

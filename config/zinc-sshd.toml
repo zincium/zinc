@@ -1,4 +1,4 @@
-[core]
-listen = "127.0.0.1:222"
+# listen
+Listen = "127.0.0.1:222"
 # HostKey file
-hostkey = "${APPDIR}/ssh/id_ed25519"
+HostKey = "${APPDIR}/ssh/id_ed25519"

@@ -139,6 +139,7 @@ func (srv *Server) Handle(conn net.Conn) {
 		enc.EncodeString(err.Error())
 		return
 	}
+	sugar.Infof("git-%s %s", req.Service, req.Path)
 	cmd := exec.Command(srv.GitPath,
 		"-c", "receive.denyDeleteCurrent=false",
 		req.Service,

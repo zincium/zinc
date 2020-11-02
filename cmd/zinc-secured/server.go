@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/url"
 	"os"
@@ -199,19 +200,17 @@ func (srv *Server) Handle(conn net.Conn) {
 	defer func() {
 		_ = process.Finalize(cmd)
 	}()
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		if _, err := base.Copy(conn, out); err != nil {
-			sugar.Debugf("copy out to conn: %v", err)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if _, err := base.Copy(in, conn); err != nil {
-			sugar.Debugf("copy stdin to conn: %v", err)
-		}
-	}()
-	wg.Wait()
+	err = base.GroupExecute(
+		func() error {
+			_, err := base.Copy(conn, out)
+			return err
+		},
+		func() error {
+			_, err := base.Copy(in, conn)
+			return err
+		},
+	)
+	if err != nil && err != io.EOF {
+		sugar.Debugf("IO Exchange: %v", err)
+	}
 }

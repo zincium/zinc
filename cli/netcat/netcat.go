@@ -19,10 +19,10 @@ var (
 )
 
 func generateTLSConfig() *tls.Config {
-	insecure := base.IsTrue(os.Getenv("ZINC_INSECURE_TLS"))
 	return &tls.Config{
 		MinVersion:         tls.VersionTLS12,
-		InsecureSkipVerify: insecure,
+		InsecureSkipVerify: InsecureSkipVerify,
+		NextProtos:         []string{"quic-git"},
 	}
 }
 
@@ -191,6 +191,9 @@ func (o *options) ParseArgv() error {
 	args := pa.Unresolved()
 	if len(args) == 0 {
 		return errors.New("missing address input")
+	}
+	if base.IsTrue(os.Getenv("ZINC_INSECURE_TLS")) {
+		InsecureSkipVerify = true
 	}
 	if len(args) == 1 {
 		o.address = args[0]

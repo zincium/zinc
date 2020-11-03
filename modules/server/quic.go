@@ -166,6 +166,9 @@ func (srv *QuicServer) handle(conn quic.Session) error {
 
 //Shutdown todo
 func (srv *QuicServer) Shutdown(ctx context.Context) error {
+	if srv == nil {
+		return nil
+	}
 	srv.mu.Lock()
 	lnerr := srv.closeListenersLocked()
 	srv.closeDoneChanLocked()

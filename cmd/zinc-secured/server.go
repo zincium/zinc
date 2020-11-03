@@ -12,7 +12,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/go-git/go-git/v5/plumbing/format/pktline"
 	"github.com/zincium/zinc/modules/base"
@@ -47,76 +46,81 @@ type Request struct {
 
 // Shutdown shutdown
 func (srv *Server) Shutdown(ctx context.Context) error {
-	var wg sync.WaitGroup
-	wg.Add(3)
-	go func() {
-		defer wg.Done()
-		if srv.srv == nil {
-			return
-		}
-		if err := srv.srv.Shutdown(ctx); err != nil {
-			sugar.Errorf("shutdown git over tcp service: %v", err)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if srv.tlssrv == nil {
-			return
-		}
-		if err := srv.tlssrv.Shutdown(ctx); err != nil {
-			sugar.Errorf("shutdown git over tls service: %v", err)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if srv.qsrv == nil {
-			return
-		}
-		if err := srv.qsrv.Shutdown(ctx); err != nil {
-			sugar.Errorf("shutdown git over quic service: %v", err)
-		}
-	}()
+	return base.GroupExecute(
+		func() error {
+			// shutdown checked srv == nil
+			if err := srv.srv.Shutdown(ctx); err != nil {
+				sugar.Errorf("shutdown git over tcp service: %v", err)
+				return err
+			}
+			return nil
+		},
+		func() error {
+			if err := srv.tlssrv.Shutdown(ctx); err != nil {
+				sugar.Errorf("shutdown git over tls service: %v", err)
+				return err
+			}
+			return nil
+		},
+		func() error {
+			if err := srv.qsrv.Shutdown(ctx); err != nil {
+				sugar.Errorf("shutdown git over tcp service: %v", err)
+				return err
+			}
+			return nil
+		},
+	)
+}
+
+func (srv *Server) listenAndServeTCP(opts *Options) error {
+	if opts.Listen == "" {
+		return nil
+	}
+	srv.srv = &server.Server{Handler: srv.Handle, MaxTimeout: opts.maxTimeout, IdleTimeout: opts.idleTimeout}
+	sugar.Infof("listen %s (tcp)", opts.Listen)
+	if err := srv.tlssrv.ListenAndServe(opts.Listen); err != nil && err != server.ErrServerClosed {
+		sugar.Fatalf("ListenAndServe tls://%s error: %v", opts.TLSListen, err)
+	}
+	return nil
+}
+
+func (srv *Server) listenAndServeTLS(opts *Options) error {
+	if opts.TLSListen == "" {
+		return nil
+	}
+	srv.tlssrv = &server.Server{Handler: srv.Handle, MaxTimeout: opts.maxTimeout, IdleTimeout: opts.idleTimeout}
+	sugar.Infof("listen %s (tls)", opts.TLSListen)
+	if err := srv.tlssrv.ListenAndServeTLS(opts.TLSListen, opts.Certificate, opts.CertificateKey); err != nil && err != server.ErrServerClosed {
+		sugar.Fatalf("ListenAndServe tls://%s error: %v", opts.TLSListen, err)
+	}
+	return nil
+}
+
+func (srv *Server) listenAndServeQUIC(opts *Options) error {
+	if opts.QUICListen == "" {
+		return nil
+	}
+	srv.qsrv = &server.QuicServer{Handler: srv.Handle, MaxTimeout: opts.maxTimeout, IdleTimeout: opts.idleTimeout}
+	sugar.Infof("listen %s (quic)", opts.QUICListen)
+	if err := srv.qsrv.ListenAndServeQUIC(opts.QUICListen, opts.Certificate, opts.CertificateKey); err != nil && err != server.ErrServerClosed {
+		sugar.Fatalf("ListenAndServe quic://%s error: %v", opts.QUICListen, err)
+	}
 	return nil
 }
 
 // ListenAndServe todo
 func (srv *Server) ListenAndServe(opts *Options) {
-	var wg sync.WaitGroup
-	srv.srv = &server.Server{Handler: srv.Handle, MaxTimeout: opts.maxTimeout, IdleTimeout: opts.idleTimeout}
-	srv.tlssrv = &server.Server{Handler: srv.Handle, MaxTimeout: opts.maxTimeout, IdleTimeout: opts.idleTimeout}
-	srv.qsrv = &server.QuicServer{Handler: srv.Handle, MaxTimeout: opts.maxTimeout, IdleTimeout: opts.idleTimeout}
-	wg.Add(3)
-	go func() {
-		defer wg.Done()
-		if opts.Listen == "" {
-			return
-		}
-		sugar.Infof("listen %s (tcp)", opts.Listen)
-		if err := srv.srv.ListenAndServe(opts.Listen); err != nil && err != server.ErrServerClosed {
-			sugar.Fatalf("ListenAndServe tcp://%s error: %v", opts.Listen, err)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if opts.TLSListen == "" {
-			return
-		}
-		sugar.Infof("listen %s (tls)", opts.TLSListen)
-		if err := srv.tlssrv.ListenAndServeTLS(opts.TLSListen, opts.Certificate, opts.CertificateKey); err != nil && err != server.ErrServerClosed {
-			sugar.Fatalf("ListenAndServe tls://%s error: %v", opts.TLSListen, err)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		if opts.QUICListen == "" {
-			return
-		}
-		sugar.Infof("listen %s (quic)", opts.QUICListen)
-		if err := srv.qsrv.ListenAndServeQUIC(opts.QUICListen, opts.Certificate, opts.CertificateKey); err != nil && err != server.ErrServerClosed {
-			sugar.Fatalf("ListenAndServe quic://%s error: %v", opts.QUICListen, err)
-		}
-	}()
-	wg.Wait()
+	_ = base.GroupExecute(
+		func() error {
+			return srv.listenAndServeTCP(opts)
+		},
+		func() error {
+			return srv.listenAndServeTLS(opts)
+		},
+		func() error {
+			return srv.listenAndServeQUIC(opts)
+		},
+	)
 	sugar.Infof("zinc-secured git (tcp/tls/quic) server exited")
 }
 

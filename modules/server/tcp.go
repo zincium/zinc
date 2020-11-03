@@ -151,6 +151,9 @@ func (srv *Server) ListenAndServe(listen string) error {
 
 //Shutdown todo
 func (srv *Server) Shutdown(ctx context.Context) error {
+	if srv == nil {
+		return nil
+	}
 	srv.mu.Lock()
 	lnerr := srv.closeListenersLocked()
 	srv.closeDoneChanLocked()

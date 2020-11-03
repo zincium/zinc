@@ -115,7 +115,7 @@ var (
 )
 
 func version() {
-	fmt.Fprintf(os.Stdout, `zinc-secured - Redesigned Git Transfer Service
+	fmt.Fprintf(os.Stdout, `netcat - A witty netcat client
 version:       %s
 build branch:  %s
 build commit:  %s

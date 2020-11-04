@@ -185,11 +185,11 @@ func (o *options) Invoke(val int, oa, raw string) error {
 func (o *options) buildDefaultAddress(addr string) string {
 	switch o.mode {
 	case ModeTCP:
-		return addr + ":" + strconv.Itoa(9418)
+		return addr + ":9418"
 	case ModeTLS:
-		return addr + ":" + strconv.Itoa(9419)
+		return addr + ":9419"
 	case ModeQUIC:
-		return addr + ":" + strconv.Itoa(9420)
+		return addr + ":9419"
 	}
 	return addr
 }

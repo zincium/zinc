@@ -8,6 +8,8 @@ import (
 	"io"
 	"net"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/lucas-clemente/quic-go"
 	"github.com/zincium/zinc/modules/base"
@@ -176,6 +178,21 @@ func (o *options) Invoke(val int, oa, raw string) error {
 	return nil
 }
 
+func (o options) buildAddress(addr string) string {
+	_, _, err := net.SplitHostPort(addr)
+	if err != nil && strings.Contains(err.Error(), "missing port in address") {
+		switch o.mode {
+		case ModeTCP:
+			return addr + ":" + strconv.Itoa(9418)
+		case ModeTLS:
+			return addr + ":" + strconv.Itoa(9419)
+		case ModeQUIC:
+			return addr + ":" + strconv.Itoa(9420)
+		}
+	}
+	return addr
+}
+
 func (o *options) ParseArgv() error {
 	var pa base.ParseArgs
 	pa.Add("help", base.NOARG, 'h')
@@ -196,7 +213,7 @@ func (o *options) ParseArgv() error {
 		InsecureSkipVerify = true
 	}
 	if len(args) == 1 {
-		o.address = args[0]
+		o.address = o.buildAddress(args[0])
 	} else {
 		o.address = net.JoinHostPort(args[0], args[1])
 	}

@@ -84,7 +84,7 @@ func (c *quicConn) Read(b []byte) (n int, err error) {
 }
 
 func (c *quicConn) Close() (err error) {
-	err = c.Stream.Close()
+	c.Stream.CancelWrite(quic.ErrorCode(0x200))
 	if c.closeCanceler != nil {
 		c.closeCanceler()
 	}

@@ -126,10 +126,8 @@ func (srv *Server) ListenAndServe(opts *Options) {
 
 func (srv *Server) readRequest(conn net.Conn) (*Request, error) {
 	dec := pktline.NewScanner(conn)
-	if !dec.Scan() {
-		if dec.Err() == nil {
-			return nil, io.EOF ////avoid Err == nil
-		}
+	_ = dec.Scan()
+	if err := dec.Err(); err != nil {
 		return nil, dec.Err()
 	}
 	parts := bytes.Split(dec.Bytes(), null)

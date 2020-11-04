@@ -137,6 +137,7 @@ usage: %s <option> url
   -S|--tls         Create a tls connection according to the input address
   -Q|--quic        Create a quic connection according to the input address
   -K|--insecure    Allow insecure server connections when using TLS
+  -R|--replace     Replace port to default port
 
 `, os.Args[0])
 }
@@ -152,8 +153,9 @@ const (
 )
 
 type options struct {
-	mode    ExchangeMode
-	address string
+	mode        ExchangeMode
+	address     string
+	replacePort bool
 }
 
 func (o *options) Invoke(val int, oa, raw string) error {
@@ -174,21 +176,34 @@ func (o *options) Invoke(val int, oa, raw string) error {
 		o.mode = ModeQUIC
 	case 'K':
 		InsecureSkipVerify = true
+	case 'R':
+		o.replacePort = true
 	}
 	return nil
 }
 
-func (o options) buildAddress(addr string) string {
-	_, _, err := net.SplitHostPort(addr)
-	if err != nil && strings.Contains(err.Error(), "missing port in address") {
-		switch o.mode {
-		case ModeTCP:
-			return addr + ":" + strconv.Itoa(9418)
-		case ModeTLS:
-			return addr + ":" + strconv.Itoa(9419)
-		case ModeQUIC:
-			return addr + ":" + strconv.Itoa(9420)
+func (o *options) buildDefaultAddress(addr string) string {
+	switch o.mode {
+	case ModeTCP:
+		return addr + ":" + strconv.Itoa(9418)
+	case ModeTLS:
+		return addr + ":" + strconv.Itoa(9419)
+	case ModeQUIC:
+		return addr + ":" + strconv.Itoa(9420)
+	}
+	return addr
+}
+
+func (o *options) rebuildAddress(addr string) string {
+	address, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		if strings.Contains(err.Error(), "missing port in address") {
+			return o.buildDefaultAddress(addr)
 		}
+		return addr
+	}
+	if o.replacePort {
+		return o.buildDefaultAddress(address)
 	}
 	return addr
 }
@@ -202,6 +217,7 @@ func (o *options) ParseArgv() error {
 	pa.Add("tls", base.NOARG, 'S')
 	pa.Add("quic", base.NOARG, 'Q')
 	pa.Add("insecure", base.NOARG, 'K')
+	pa.Add("replace", base.NOARG, 'R')
 	if err := pa.Execute(os.Args, o); err != nil {
 		return err
 	}
@@ -213,9 +229,13 @@ func (o *options) ParseArgv() error {
 		InsecureSkipVerify = true
 	}
 	if len(args) == 1 {
-		o.address = o.buildAddress(args[0])
+		o.address = o.rebuildAddress(args[0])
 	} else {
-		o.address = net.JoinHostPort(args[0], args[1])
+		if o.replacePort {
+			o.address = o.buildDefaultAddress(args[0])
+		} else {
+			o.address = net.JoinHostPort(args[0], args[1])
+		}
 	}
 	return nil
 }

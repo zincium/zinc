@@ -32,20 +32,20 @@ func generateTLSConfig() *tls.Config {
 func ExchangeTLS(address string) {
 	conn, err := tls.Dial("tcp", address, generateTLSConfig())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable dial(tls) %s : %v", address, err)
+		fmt.Fprintf(os.Stderr, "[TLS] unable dial %s : %v\n", address, err)
 		os.Exit(1)
 	}
 	defer conn.Close()
 	_ = base.GroupExecute(
 		func() error {
 			if _, err := base.Copy(conn, os.Stdin); err != nil && err != io.EOF {
-				fmt.Fprintf(os.Stderr, "copy stdin to conn %v\n", err)
+				fmt.Fprintf(os.Stderr, "[tls] copy stdin to conn %v\n", err)
 			}
 			return nil
 		},
 		func() error {
 			if _, err := base.Copy(os.Stdout, conn); err != nil && err != io.EOF {
-				fmt.Fprintf(os.Stderr, "copy conn to stdout %v\n", err)
+				fmt.Fprintf(os.Stderr, "[TLS] copy conn to stdout %v\n", err)
 			}
 			return nil
 		},
@@ -57,25 +57,25 @@ func ExchangeTLS(address string) {
 func ExchangeQUIC(address string) {
 	session, err := quic.DialAddr(address, generateTLSConfig(), nil)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable dial(quic) %s : %v", address, err)
+		fmt.Fprintf(os.Stderr, "[QUIC] unable dial %s : %v\n", address, err)
 		os.Exit(1)
 	}
 	stream, err := session.OpenStreamSync(context.Background())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable open stream %s : %v", address, err)
+		fmt.Fprintf(os.Stderr, "[QUIC] unable open stream %s : %v", address, err)
 		os.Exit(1)
 	}
 	defer stream.Close()
 	_ = base.GroupExecute(
 		func() error {
 			if _, err := base.Copy(stream, os.Stdin); err != nil && err != io.EOF {
-				fmt.Fprintf(os.Stderr, "copy stdin to conn %v\n", err)
+				fmt.Fprintf(os.Stderr, "[QUIC] copy stdin to conn %v\n", err)
 			}
 			return nil
 		},
 		func() error {
 			if _, err := base.Copy(os.Stdout, stream); err != nil && err != io.EOF {
-				fmt.Fprintf(os.Stderr, "copy conn to stdout %v\n", err)
+				fmt.Fprintf(os.Stderr, "[QUIC] copy conn to stdout %v\n", err)
 			}
 			return nil
 		},
@@ -86,20 +86,20 @@ func ExchangeQUIC(address string) {
 func ExchangeTCP(address string) {
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable dial(tcp) %s : %v", address, err)
+		fmt.Fprintf(os.Stderr, "[TCP] unable dial %s : %v\n", address, err)
 		os.Exit(1)
 	}
 	defer conn.Close()
 	_ = base.GroupExecute(
 		func() error {
 			if _, err := base.Copy(conn, os.Stdin); err != nil && err != io.EOF {
-				fmt.Fprintf(os.Stderr, "copy stdin to conn %v\n", err)
+				fmt.Fprintf(os.Stderr, "[TCP] copy stdin to conn %v\n", err)
 			}
 			return nil
 		},
 		func() error {
 			if _, err := base.Copy(os.Stdout, conn); err != nil && err != io.EOF {
-				fmt.Fprintf(os.Stderr, "copy conn to stdout %v\n", err)
+				fmt.Fprintf(os.Stderr, "[TCP] copy conn to stdout %v\n", err)
 			}
 			return nil
 		},
@@ -108,12 +108,11 @@ func ExchangeTCP(address string) {
 
 // version info
 var (
-	VERSION       = "1.0"
-	BUILDTIME     string
-	BUILDCOMMIT   string
-	BUILDBRANCH   string
-	GOVERSION     string
-	ServerVersion = "Zinc/" + VERSION
+	VERSION     = "1.0"
+	BUILDTIME   string
+	BUILDCOMMIT string
+	BUILDBRANCH string
+	GOVERSION   string
 )
 
 func version() {
@@ -137,7 +136,7 @@ usage: %s <option> url
   -S|--tls         Create a tls connection according to the input address
   -Q|--quic        Create a quic connection according to the input address
   -K|--insecure    Allow insecure server connections when using TLS
-  -R|--replace     Replace port to default port
+  -P|--port        Use a specific port to connect to the server
 
 `, os.Args[0])
 }
@@ -152,10 +151,23 @@ const (
 	ModeQUIC
 )
 
+// Port port
+func (e ExchangeMode) Port() string {
+	switch e {
+	case ModeTCP:
+		return "9418"
+	case ModeTLS:
+		return "9419"
+	case ModeQUIC:
+		return "9420"
+	}
+	return "80"
+}
+
 type options struct {
-	mode        ExchangeMode
-	address     string
-	replacePort bool
+	mode    ExchangeMode
+	address string
+	port    int
 }
 
 func (o *options) Invoke(val int, oa, raw string) error {
@@ -176,36 +188,31 @@ func (o *options) Invoke(val int, oa, raw string) error {
 		o.mode = ModeQUIC
 	case 'K':
 		InsecureSkipVerify = true
-	case 'R':
-		o.replacePort = true
+	case 'P':
+		p, err := strconv.Atoi(oa)
+		if err != nil {
+			return base.ErrorCat("invaild port number: ", oa)
+		}
+		o.port = p
 	}
 	return nil
 }
 
-func (o *options) buildDefaultAddress(addr string) string {
-	switch o.mode {
-	case ModeTCP:
-		return addr + ":9418"
-	case ModeTLS:
-		return addr + ":9419"
-	case ModeQUIC:
-		return addr + ":9420"
-	}
-	return addr
-}
-
-func (o *options) rebuildAddress(addr string) string {
-	address, _, err := net.SplitHostPort(addr)
+func (o *options) makeAddress(host string) string {
+	a, _, err := net.SplitHostPort(host)
 	if err != nil {
-		if strings.Contains(err.Error(), "missing port in address") {
-			return o.buildDefaultAddress(addr)
+		if !strings.Contains(err.Error(), "missing port in address") {
+			return host
 		}
-		return addr
+		if o.port != 0 {
+			return net.JoinHostPort(a, strconv.Itoa(o.port))
+		}
+		return net.JoinHostPort(host, o.mode.Port())
 	}
-	if o.replacePort {
-		return o.buildDefaultAddress(address)
+	if o.port != 0 {
+		return net.JoinHostPort(a, strconv.Itoa(o.port))
 	}
-	return addr
+	return host
 }
 
 func (o *options) ParseArgv() error {
@@ -217,7 +224,7 @@ func (o *options) ParseArgv() error {
 	pa.Add("tls", base.NOARG, 'S')
 	pa.Add("quic", base.NOARG, 'Q')
 	pa.Add("insecure", base.NOARG, 'K')
-	pa.Add("replace", base.NOARG, 'R')
+	pa.Add("port", base.NOARG, 'P')
 	if err := pa.Execute(os.Args, o); err != nil {
 		return err
 	}
@@ -225,28 +232,25 @@ func (o *options) ParseArgv() error {
 	if len(args) == 0 {
 		return errors.New("missing address input")
 	}
+	base.DbgPrint("Args %v", args)
 	if base.IsTrue(os.Getenv("ZINC_INSECURE_TLS")) {
 		InsecureSkipVerify = true
 	}
-	if len(args) == 1 {
-		o.address = o.rebuildAddress(args[0])
-	} else {
-		if o.replacePort {
-			o.address = o.buildDefaultAddress(args[0])
-		} else {
-			o.address = net.JoinHostPort(args[0], args[1])
-		}
+	if len(args) == 1 || o.port != 0 {
+		o.address = o.makeAddress(args[0]) // ignore port args
+		return nil
 	}
+	o.address = net.JoinHostPort(args[0], args[1])
 	return nil
 }
 
 func main() {
 	var o options
 	if err := o.ParseArgv(); err != nil {
-		fmt.Fprintf(os.Stderr, "ParseArgv: \x1b[31m%v\x1b[0m\n", err)
+		fmt.Fprintf(os.Stderr, "netcat parse argv error: \x1b[31m%v\x1b[0m\n", err)
 		os.Exit(1)
 	}
-	base.DbgPrint("Use netcat to connect: %s", o.address)
+	base.DbgPrint("Use netcat to connect: %s insecure tls: %v", o.address, InsecureSkipVerify)
 	switch o.mode {
 	case ModeTCP:
 		ExchangeTCP(o.address)

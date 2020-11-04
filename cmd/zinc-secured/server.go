@@ -127,6 +127,9 @@ func (srv *Server) ListenAndServe(opts *Options) {
 func (srv *Server) readRequest(conn net.Conn) (*Request, error) {
 	dec := pktline.NewScanner(conn)
 	if !dec.Scan() {
+		if dec.Err() == nil {
+			return nil, io.EOF ////avoid Err == nil
+		}
 		return nil, dec.Err()
 	}
 	parts := bytes.Split(dec.Bytes(), null)
@@ -162,16 +165,25 @@ func (srv *Server) readRequest(conn net.Conn) (*Request, error) {
 	return req, nil
 }
 
-// Handle on handle
-func (srv *Server) Handle(conn net.Conn) {
+// WriteError write error
+func WriteError(conn net.Conn, msg string) {
 	enc := pktline.NewEncoder(conn)
+	_ = enc.EncodeString(msg)
+	_ = enc.Flush()
+}
+
+// Handle on handle
+func (srv *Server) Handle(conn net.Conn, mode string) {
+	// defer conn.Close()
+	// FIXME Windows needs Fix: server closes net.Conn correctly
 	req, err := srv.readRequest(conn)
 	if err != nil {
-		sugar.Warnf("read %v request error: %v", conn.RemoteAddr(), err)
-		enc.EncodeString(err.Error())
+		sugar.Warnf("[%s] read %v request error: %v", mode, conn.RemoteAddr(), err)
+		WriteError(conn, err.Error())
 		return
 	}
-	sugar.Infof("git-%s %s", req.Service, req.Path)
+	fmt.Fprintf(os.Stderr, "%v- %v", mode, req)
+	sugar.Infof("[%s] git-%s %s", mode, req.Service, req.Path)
 	cmd := exec.Command(srv.GitPath,
 		"-c", "receive.denyDeleteCurrent=false",
 		req.Service,
@@ -184,21 +196,21 @@ func (srv *Server) Handle(conn net.Conn) {
 	in, err := cmd.StdinPipe()
 	if err != nil {
 		sugar.Errorf("create stdin pipe: %v", err)
-		enc.EncodeString("internal server error")
+		WriteError(conn, "internal server error")
 		return
 	}
 	defer in.Close()
 	out, err := cmd.StdoutPipe()
 	if err != nil {
 		sugar.Errorf("create stdout pipe: %v", err)
-		enc.EncodeString("internal server error")
+		WriteError(conn, "internal server error")
 		return
 	}
 	defer out.Close()
 	if err := cmd.Start(); err != nil {
 		// recored error
 		sugar.Errorf("unable create process: %v", err)
-		enc.EncodeString("internal server error")
+		WriteError(conn, "internal server error")
 		return
 	}
 	defer func() {

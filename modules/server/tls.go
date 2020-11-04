@@ -61,5 +61,5 @@ func (srv *Server) handleTLS(conn net.Conn, config *tls.Config) {
 	if err := tlsconn.Handshake(); err != nil {
 		return
 	}
-	srv.handle(tlsconn)
+	srv.handle(tlsconn, "TLS")
 }

@@ -13,7 +13,7 @@ var ErrServerClosed = errors.New("git: Server closed")
 
 // Server server
 type Server struct {
-	Handler     func(conn net.Conn)
+	Handler     func(conn net.Conn, mode string)
 	MaxTimeout  time.Duration
 	IdleTimeout time.Duration
 	mu          sync.RWMutex
@@ -124,11 +124,11 @@ func (srv *Server) Serve(ln net.Listener) error {
 			}
 			return e
 		}
-		go srv.handle(conn)
+		go srv.handle(conn, "TCP")
 	}
 }
 
-func (srv *Server) handle(conn net.Conn) {
+func (srv *Server) handle(conn net.Conn, mode string) {
 	srv.trackConn(conn, true)
 	defer srv.trackConn(conn, false)
 	sconn := &serverConn{Conn: conn, idleTimeout: srv.IdleTimeout}
@@ -136,7 +136,7 @@ func (srv *Server) handle(conn net.Conn) {
 		sconn.maxDeadline = time.Now().Add(srv.MaxTimeout)
 	}
 	if srv.Handler != nil {
-		srv.Handler(sconn)
+		srv.Handler(sconn, mode)
 	}
 }
 

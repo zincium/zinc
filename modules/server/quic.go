@@ -12,7 +12,7 @@ import (
 
 // QuicServer quic
 type QuicServer struct {
-	Handler     func(net.Conn)
+	Handler     func(net.Conn, string)
 	IdleTimeout time.Duration
 	MaxTimeout  time.Duration
 	mu          sync.RWMutex
@@ -151,7 +151,6 @@ func (srv *QuicServer) handle(conn quic.Session) error {
 	if err != nil {
 		return err
 	}
-
 	srv.trackConn(sm, true)
 	defer srv.trackConn(sm, false)
 	qc := &quicConn{Stream: sm, conn: conn, idleTimeout: srv.IdleTimeout}
@@ -159,7 +158,7 @@ func (srv *QuicServer) handle(conn quic.Session) error {
 		qc.maxDeadline = time.Now().Add(srv.MaxTimeout)
 	}
 	if srv.Handler != nil {
-		srv.Handler(qc)
+		srv.Handler(qc, "QUIC")
 	}
 	return nil
 }

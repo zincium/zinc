@@ -189,7 +189,7 @@ func (o *options) buildDefaultAddress(addr string) string {
 	case ModeTLS:
 		return addr + ":9419"
 	case ModeQUIC:
-		return addr + ":9419"
+		return addr + ":9420"
 	}
 	return addr
 }

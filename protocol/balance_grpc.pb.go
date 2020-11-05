@@ -17,7 +17,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BalanceClient interface {
-	// Sends a greeting
+	Loadavg(ctx context.Context, in *LoadavgRequest, opts ...grpc.CallOption) (*LoadavgResponse, error)
 	UploadPack(ctx context.Context, opts ...grpc.CallOption) (Balance_UploadPackClient, error)
 	ReceivePack(ctx context.Context, opts ...grpc.CallOption) (Balance_ReceivePackClient, error)
 	LookupRefs(ctx context.Context, in *RefsRequest, opts ...grpc.CallOption) (Balance_LookupRefsClient, error)
@@ -31,6 +31,15 @@ type balanceClient struct {
 
 func NewBalanceClient(cc grpc.ClientConnInterface) BalanceClient {
 	return &balanceClient{cc}
+}
+
+func (c *balanceClient) Loadavg(ctx context.Context, in *LoadavgRequest, opts ...grpc.CallOption) (*LoadavgResponse, error) {
+	out := new(LoadavgResponse)
+	err := c.cc.Invoke(ctx, "/protocol.Balance/Loadavg", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *balanceClient) UploadPack(ctx context.Context, opts ...grpc.CallOption) (Balance_UploadPackClient, error) {
@@ -193,7 +202,7 @@ func (x *balancePostReceivePackClient) Recv() (*PostReceivePackResponse, error) 
 // All implementations must embed UnimplementedBalanceServer
 // for forward compatibility
 type BalanceServer interface {
-	// Sends a greeting
+	Loadavg(context.Context, *LoadavgRequest) (*LoadavgResponse, error)
 	UploadPack(Balance_UploadPackServer) error
 	ReceivePack(Balance_ReceivePackServer) error
 	LookupRefs(*RefsRequest, Balance_LookupRefsServer) error
@@ -206,6 +215,9 @@ type BalanceServer interface {
 type UnimplementedBalanceServer struct {
 }
 
+func (UnimplementedBalanceServer) Loadavg(context.Context, *LoadavgRequest) (*LoadavgResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Loadavg not implemented")
+}
 func (UnimplementedBalanceServer) UploadPack(Balance_UploadPackServer) error {
 	return status.Errorf(codes.Unimplemented, "method UploadPack not implemented")
 }
@@ -232,6 +244,24 @@ type UnsafeBalanceServer interface {
 
 func RegisterBalanceServer(s grpc.ServiceRegistrar, srv BalanceServer) {
 	s.RegisterService(&_Balance_serviceDesc, srv)
+}
+
+func _Balance_Loadavg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoadavgRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalanceServer).Loadavg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protocol.Balance/Loadavg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalanceServer).Loadavg(ctx, req.(*LoadavgRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Balance_UploadPack_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -362,7 +392,12 @@ func (x *balancePostReceivePackServer) Recv() (*PostReceivePackRequest, error) {
 var _Balance_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "protocol.Balance",
 	HandlerType: (*BalanceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Loadavg",
+			Handler:    _Balance_Loadavg_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "UploadPack",

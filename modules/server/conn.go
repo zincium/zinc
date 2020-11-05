@@ -30,7 +30,36 @@ func (c *serverConn) Read(b []byte) (int, error) {
 	return c.Conn.Read(b)
 }
 
+// rstAvoidanceDelay is the amount of time we sleep after closing the
+// write side of a TCP connection before closing the entire socket.
+// By sleeping, we increase the chances that the client sees our FIN
+// and processes its final data before they process the subsequent RST
+// from closing a connection with known unread data.
+// This RST seems to occur mostly on BSD systems. (And Windows?)
+// This timeout is somewhat arbitrary (~latency around the planet).
+const rstAvoidanceDelay = 500 * time.Millisecond
+
+type closeWriter interface {
+	CloseWrite() error
+}
+
+var _ closeWriter = (*net.TCPConn)(nil)
+
+// closeWrite flushes any outstanding data and sends a FIN packet (if
+// client is connected via TCP), signalling that we're done. We then
+// pause for a bit, hoping the client processes it before any
+// subsequent RST.
+//
+// See https://golang.org/issue/3595
+func (c *serverConn) closeWriteAndWait() {
+	if tcp, ok := c.Conn.(closeWriter); ok {
+		tcp.CloseWrite()
+	}
+	time.Sleep(rstAvoidanceDelay)
+}
+
 func (c *serverConn) Close() error {
+	c.closeWriteAndWait()
 	//time.Sleep(time.Millisecond * 20)
 	return c.Conn.Close()
 }

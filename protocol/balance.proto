@@ -63,10 +63,11 @@ message ReceivePackResponse {
 message RefsRequest {
   enum Filter { DEFAULT = 0; EXTENDED = 1; ALL = 2; }
   enum Mode { UPLOADPACK = 0; RECEIVEPACK = 1; }
-  string location = 1;
-  string protocol = 2;
-  Filter filter = 3;
-  Mode mode = 4;
+  string hash = 1;
+  string location = 2;
+  string protocol = 3;
+  Filter filter = 4;
+  Mode mode = 5;
 }
 
 message RefsResponse { bytes data = 1; }

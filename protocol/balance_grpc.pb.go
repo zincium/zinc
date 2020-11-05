@@ -13,87 +13,386 @@ import (
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion7
 
-// BalanceServiceClient is the client API for BalanceService service.
+// BalanceClient is the client API for Balance service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type BalanceServiceClient interface {
+type BalanceClient interface {
 	// Sends a greeting
-	SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error)
+	UploadPack(ctx context.Context, opts ...grpc.CallOption) (Balance_UploadPackClient, error)
+	ReceivePack(ctx context.Context, opts ...grpc.CallOption) (Balance_ReceivePackClient, error)
+	LookupRefs(ctx context.Context, in *RefsRequest, opts ...grpc.CallOption) (Balance_LookupRefsClient, error)
+	PostUploadPack(ctx context.Context, opts ...grpc.CallOption) (Balance_PostUploadPackClient, error)
+	PostReceivePack(ctx context.Context, opts ...grpc.CallOption) (Balance_PostReceivePackClient, error)
 }
 
-type balanceServiceClient struct {
+type balanceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewBalanceServiceClient(cc grpc.ClientConnInterface) BalanceServiceClient {
-	return &balanceServiceClient{cc}
+func NewBalanceClient(cc grpc.ClientConnInterface) BalanceClient {
+	return &balanceClient{cc}
 }
 
-func (c *balanceServiceClient) SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error) {
-	out := new(HelloReply)
-	err := c.cc.Invoke(ctx, "/protocol.BalanceService/SayHello", in, out, opts...)
+func (c *balanceClient) UploadPack(ctx context.Context, opts ...grpc.CallOption) (Balance_UploadPackClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Balance_serviceDesc.Streams[0], "/protocol.Balance/UploadPack", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &balanceUploadPackClient{stream}
+	return x, nil
 }
 
-// BalanceServiceServer is the server API for BalanceService service.
-// All implementations must embed UnimplementedBalanceServiceServer
-// for forward compatibility
-type BalanceServiceServer interface {
-	// Sends a greeting
-	SayHello(context.Context, *HelloRequest) (*HelloReply, error)
-	mustEmbedUnimplementedBalanceServiceServer()
+type Balance_UploadPackClient interface {
+	Send(*UploadPackRequest) error
+	Recv() (*UploadPackResponse, error)
+	grpc.ClientStream
 }
 
-// UnimplementedBalanceServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedBalanceServiceServer struct {
+type balanceUploadPackClient struct {
+	grpc.ClientStream
 }
 
-func (UnimplementedBalanceServiceServer) SayHello(context.Context, *HelloRequest) (*HelloReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SayHello not implemented")
-}
-func (UnimplementedBalanceServiceServer) mustEmbedUnimplementedBalanceServiceServer() {}
-
-// UnsafeBalanceServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to BalanceServiceServer will
-// result in compilation errors.
-type UnsafeBalanceServiceServer interface {
-	mustEmbedUnimplementedBalanceServiceServer()
+func (x *balanceUploadPackClient) Send(m *UploadPackRequest) error {
+	return x.ClientStream.SendMsg(m)
 }
 
-func RegisterBalanceServiceServer(s grpc.ServiceRegistrar, srv BalanceServiceServer) {
-	s.RegisterService(&_BalanceService_serviceDesc, srv)
-}
-
-func _BalanceService_SayHello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HelloRequest)
-	if err := dec(in); err != nil {
+func (x *balanceUploadPackClient) Recv() (*UploadPackResponse, error) {
+	m := new(UploadPackResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(BalanceServiceServer).SayHello(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/protocol.BalanceService/SayHello",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BalanceServiceServer).SayHello(ctx, req.(*HelloRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
-var _BalanceService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "protocol.BalanceService",
-	HandlerType: (*BalanceServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
+func (c *balanceClient) ReceivePack(ctx context.Context, opts ...grpc.CallOption) (Balance_ReceivePackClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Balance_serviceDesc.Streams[1], "/protocol.Balance/ReceivePack", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &balanceReceivePackClient{stream}
+	return x, nil
+}
+
+type Balance_ReceivePackClient interface {
+	Send(*ReceivePackRequest) error
+	Recv() (*ReceivePackResponse, error)
+	grpc.ClientStream
+}
+
+type balanceReceivePackClient struct {
+	grpc.ClientStream
+}
+
+func (x *balanceReceivePackClient) Send(m *ReceivePackRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *balanceReceivePackClient) Recv() (*ReceivePackResponse, error) {
+	m := new(ReceivePackResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *balanceClient) LookupRefs(ctx context.Context, in *RefsRequest, opts ...grpc.CallOption) (Balance_LookupRefsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Balance_serviceDesc.Streams[2], "/protocol.Balance/LookupRefs", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &balanceLookupRefsClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Balance_LookupRefsClient interface {
+	Recv() (*RefsResponse, error)
+	grpc.ClientStream
+}
+
+type balanceLookupRefsClient struct {
+	grpc.ClientStream
+}
+
+func (x *balanceLookupRefsClient) Recv() (*RefsResponse, error) {
+	m := new(RefsResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *balanceClient) PostUploadPack(ctx context.Context, opts ...grpc.CallOption) (Balance_PostUploadPackClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Balance_serviceDesc.Streams[3], "/protocol.Balance/PostUploadPack", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &balancePostUploadPackClient{stream}
+	return x, nil
+}
+
+type Balance_PostUploadPackClient interface {
+	Send(*PostUploadPackRequest) error
+	Recv() (*PostUploadPackResponse, error)
+	grpc.ClientStream
+}
+
+type balancePostUploadPackClient struct {
+	grpc.ClientStream
+}
+
+func (x *balancePostUploadPackClient) Send(m *PostUploadPackRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *balancePostUploadPackClient) Recv() (*PostUploadPackResponse, error) {
+	m := new(PostUploadPackResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *balanceClient) PostReceivePack(ctx context.Context, opts ...grpc.CallOption) (Balance_PostReceivePackClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Balance_serviceDesc.Streams[4], "/protocol.Balance/PostReceivePack", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &balancePostReceivePackClient{stream}
+	return x, nil
+}
+
+type Balance_PostReceivePackClient interface {
+	Send(*PostReceivePackRequest) error
+	Recv() (*PostReceivePackResponse, error)
+	grpc.ClientStream
+}
+
+type balancePostReceivePackClient struct {
+	grpc.ClientStream
+}
+
+func (x *balancePostReceivePackClient) Send(m *PostReceivePackRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *balancePostReceivePackClient) Recv() (*PostReceivePackResponse, error) {
+	m := new(PostReceivePackResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// BalanceServer is the server API for Balance service.
+// All implementations must embed UnimplementedBalanceServer
+// for forward compatibility
+type BalanceServer interface {
+	// Sends a greeting
+	UploadPack(Balance_UploadPackServer) error
+	ReceivePack(Balance_ReceivePackServer) error
+	LookupRefs(*RefsRequest, Balance_LookupRefsServer) error
+	PostUploadPack(Balance_PostUploadPackServer) error
+	PostReceivePack(Balance_PostReceivePackServer) error
+	mustEmbedUnimplementedBalanceServer()
+}
+
+// UnimplementedBalanceServer must be embedded to have forward compatible implementations.
+type UnimplementedBalanceServer struct {
+}
+
+func (UnimplementedBalanceServer) UploadPack(Balance_UploadPackServer) error {
+	return status.Errorf(codes.Unimplemented, "method UploadPack not implemented")
+}
+func (UnimplementedBalanceServer) ReceivePack(Balance_ReceivePackServer) error {
+	return status.Errorf(codes.Unimplemented, "method ReceivePack not implemented")
+}
+func (UnimplementedBalanceServer) LookupRefs(*RefsRequest, Balance_LookupRefsServer) error {
+	return status.Errorf(codes.Unimplemented, "method LookupRefs not implemented")
+}
+func (UnimplementedBalanceServer) PostUploadPack(Balance_PostUploadPackServer) error {
+	return status.Errorf(codes.Unimplemented, "method PostUploadPack not implemented")
+}
+func (UnimplementedBalanceServer) PostReceivePack(Balance_PostReceivePackServer) error {
+	return status.Errorf(codes.Unimplemented, "method PostReceivePack not implemented")
+}
+func (UnimplementedBalanceServer) mustEmbedUnimplementedBalanceServer() {}
+
+// UnsafeBalanceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BalanceServer will
+// result in compilation errors.
+type UnsafeBalanceServer interface {
+	mustEmbedUnimplementedBalanceServer()
+}
+
+func RegisterBalanceServer(s grpc.ServiceRegistrar, srv BalanceServer) {
+	s.RegisterService(&_Balance_serviceDesc, srv)
+}
+
+func _Balance_UploadPack_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BalanceServer).UploadPack(&balanceUploadPackServer{stream})
+}
+
+type Balance_UploadPackServer interface {
+	Send(*UploadPackResponse) error
+	Recv() (*UploadPackRequest, error)
+	grpc.ServerStream
+}
+
+type balanceUploadPackServer struct {
+	grpc.ServerStream
+}
+
+func (x *balanceUploadPackServer) Send(m *UploadPackResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *balanceUploadPackServer) Recv() (*UploadPackRequest, error) {
+	m := new(UploadPackRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Balance_ReceivePack_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BalanceServer).ReceivePack(&balanceReceivePackServer{stream})
+}
+
+type Balance_ReceivePackServer interface {
+	Send(*ReceivePackResponse) error
+	Recv() (*ReceivePackRequest, error)
+	grpc.ServerStream
+}
+
+type balanceReceivePackServer struct {
+	grpc.ServerStream
+}
+
+func (x *balanceReceivePackServer) Send(m *ReceivePackResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *balanceReceivePackServer) Recv() (*ReceivePackRequest, error) {
+	m := new(ReceivePackRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Balance_LookupRefs_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(RefsRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(BalanceServer).LookupRefs(m, &balanceLookupRefsServer{stream})
+}
+
+type Balance_LookupRefsServer interface {
+	Send(*RefsResponse) error
+	grpc.ServerStream
+}
+
+type balanceLookupRefsServer struct {
+	grpc.ServerStream
+}
+
+func (x *balanceLookupRefsServer) Send(m *RefsResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Balance_PostUploadPack_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BalanceServer).PostUploadPack(&balancePostUploadPackServer{stream})
+}
+
+type Balance_PostUploadPackServer interface {
+	Send(*PostUploadPackResponse) error
+	Recv() (*PostUploadPackRequest, error)
+	grpc.ServerStream
+}
+
+type balancePostUploadPackServer struct {
+	grpc.ServerStream
+}
+
+func (x *balancePostUploadPackServer) Send(m *PostUploadPackResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *balancePostUploadPackServer) Recv() (*PostUploadPackRequest, error) {
+	m := new(PostUploadPackRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Balance_PostReceivePack_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BalanceServer).PostReceivePack(&balancePostReceivePackServer{stream})
+}
+
+type Balance_PostReceivePackServer interface {
+	Send(*PostReceivePackResponse) error
+	Recv() (*PostReceivePackRequest, error)
+	grpc.ServerStream
+}
+
+type balancePostReceivePackServer struct {
+	grpc.ServerStream
+}
+
+func (x *balancePostReceivePackServer) Send(m *PostReceivePackResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *balancePostReceivePackServer) Recv() (*PostReceivePackRequest, error) {
+	m := new(PostReceivePackRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+var _Balance_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "protocol.Balance",
+	HandlerType: (*BalanceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "SayHello",
-			Handler:    _BalanceService_SayHello_Handler,
+			StreamName:    "UploadPack",
+			Handler:       _Balance_UploadPack_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "ReceivePack",
+			Handler:       _Balance_ReceivePack_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "LookupRefs",
+			Handler:       _Balance_LookupRefs_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "PostUploadPack",
+			Handler:       _Balance_PostUploadPack_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "PostReceivePack",
+			Handler:       _Balance_PostReceivePack_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "balance.proto",
 }

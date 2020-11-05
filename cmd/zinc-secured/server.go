@@ -166,13 +166,13 @@ func (srv *Server) readRequest(conn net.Conn) (*Request, error) {
 // WriteError write error
 func WriteError(conn net.Conn, msg string) {
 	enc := pktline.NewEncoder(conn)
-	_ = enc.EncodeString(msg)
+	_ = enc.EncodeString(msg + "\n")
 	_ = enc.Flush()
 }
 
 // Handle on handle
 func (srv *Server) Handle(conn net.Conn, mode string) {
-	// defer conn.Close()
+	defer conn.Close()
 	// FIXME Windows needs Fix: server closes net.Conn correctly
 	req, err := srv.readRequest(conn)
 	if err != nil {

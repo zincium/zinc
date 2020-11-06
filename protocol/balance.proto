@@ -18,12 +18,35 @@ service Balance {
       returns(stream PostUploadPackResponse) {}
   rpc PostReceivePack(stream PostReceivePackRequest)
       returns(stream PostReceivePackResponse) {}
+  rpc Negotiate(NegotiateRequest) returns(NegotiateResponse) {}
 }
 
 message LoadavgRequest {}
 message LoadavgResponse {
   int64 clone = 1;
   int64 push = 2;
+}
+
+enum Step {
+  UNINITIALIZE = 0; // uninitialize
+  INITIALIZED = 1;
+  RECEIVED = 2;
+  UPDATED = 3;
+  BALANCED = 4;
+  POSTED = 5;
+};
+
+message NegotiateRequest {
+  string representative = 1;
+  string event = 2;
+  Step step = 3;
+}
+
+message NegotiateResponse {
+  string representative = 1;
+  string event = 2;
+  int32 status = 3;
+  Step step = 4;
 }
 
 message UploadPackRequest {
@@ -47,7 +70,7 @@ message ReceivePackRequest {
   int64 uid = 3;
   string protocol = 4;
   bytes stdin = 5;
-  string monarch = 6;
+  string representative = 6;
   // event id.
   string event = 7;
 }
@@ -90,7 +113,7 @@ message PostReceivePackRequest {
   int64 uid = 3;
   string protocol = 4;
   bytes stdin = 5;
-  string monarch = 6;
+  string representative = 6;
   string event = 7;
 }
 

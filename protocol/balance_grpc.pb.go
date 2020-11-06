@@ -23,6 +23,7 @@ type BalanceClient interface {
 	LookupRefs(ctx context.Context, in *RefsRequest, opts ...grpc.CallOption) (Balance_LookupRefsClient, error)
 	PostUploadPack(ctx context.Context, opts ...grpc.CallOption) (Balance_PostUploadPackClient, error)
 	PostReceivePack(ctx context.Context, opts ...grpc.CallOption) (Balance_PostReceivePackClient, error)
+	Negotiate(ctx context.Context, in *NegotiateRequest, opts ...grpc.CallOption) (*NegotiateResponse, error)
 }
 
 type balanceClient struct {
@@ -198,6 +199,15 @@ func (x *balancePostReceivePackClient) Recv() (*PostReceivePackResponse, error) 
 	return m, nil
 }
 
+func (c *balanceClient) Negotiate(ctx context.Context, in *NegotiateRequest, opts ...grpc.CallOption) (*NegotiateResponse, error) {
+	out := new(NegotiateResponse)
+	err := c.cc.Invoke(ctx, "/protocol.Balance/Negotiate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BalanceServer is the server API for Balance service.
 // All implementations must embed UnimplementedBalanceServer
 // for forward compatibility
@@ -208,6 +218,7 @@ type BalanceServer interface {
 	LookupRefs(*RefsRequest, Balance_LookupRefsServer) error
 	PostUploadPack(Balance_PostUploadPackServer) error
 	PostReceivePack(Balance_PostReceivePackServer) error
+	Negotiate(context.Context, *NegotiateRequest) (*NegotiateResponse, error)
 	mustEmbedUnimplementedBalanceServer()
 }
 
@@ -232,6 +243,9 @@ func (UnimplementedBalanceServer) PostUploadPack(Balance_PostUploadPackServer) e
 }
 func (UnimplementedBalanceServer) PostReceivePack(Balance_PostReceivePackServer) error {
 	return status.Errorf(codes.Unimplemented, "method PostReceivePack not implemented")
+}
+func (UnimplementedBalanceServer) Negotiate(context.Context, *NegotiateRequest) (*NegotiateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Negotiate not implemented")
 }
 func (UnimplementedBalanceServer) mustEmbedUnimplementedBalanceServer() {}
 
@@ -389,6 +403,24 @@ func (x *balancePostReceivePackServer) Recv() (*PostReceivePackRequest, error) {
 	return m, nil
 }
 
+func _Balance_Negotiate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NegotiateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BalanceServer).Negotiate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/protocol.Balance/Negotiate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BalanceServer).Negotiate(ctx, req.(*NegotiateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Balance_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "protocol.Balance",
 	HandlerType: (*BalanceServer)(nil),
@@ -396,6 +428,10 @@ var _Balance_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Loadavg",
 			Handler:    _Balance_Loadavg_Handler,
+		},
+		{
+			MethodName: "Negotiate",
+			Handler:    _Balance_Negotiate_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

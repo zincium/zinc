@@ -6,6 +6,8 @@ import (
 	"net"
 	"sync"
 	"time"
+
+	"golang.org/x/net/netutil"
 )
 
 // ErrServerClosed define
@@ -13,15 +15,16 @@ var ErrServerClosed = errors.New("git: Server closed")
 
 // Server server
 type Server struct {
-	Handler     func(conn net.Conn, mode string)
-	MaxTimeout  time.Duration
-	IdleTimeout time.Duration
-	mu          sync.RWMutex
-	listenerWg  sync.WaitGroup
-	listeners   map[net.Listener]struct{}
-	conns       map[net.Conn]struct{}
-	connWg      sync.WaitGroup
-	doneChan    chan struct{}
+	Handler       func(conn net.Conn, mode string)
+	MaxTimeout    time.Duration
+	IdleTimeout   time.Duration
+	MaxConnetions int
+	mu            sync.RWMutex
+	listenerWg    sync.WaitGroup
+	listeners     map[net.Listener]struct{}
+	conns         map[net.Conn]struct{}
+	connWg        sync.WaitGroup
+	doneChan      chan struct{}
 }
 
 func (srv *Server) trackConn(c net.Conn, add bool) {
@@ -145,6 +148,9 @@ func (srv *Server) ListenAndServe(listen string) error {
 	ln, err := net.Listen("tcp", listen)
 	if err != nil {
 		return err
+	}
+	if srv.MaxConnetions != 0 {
+		ln = netutil.LimitListener(ln, srv.MaxConnetions)
 	}
 	return srv.Serve(ln)
 }

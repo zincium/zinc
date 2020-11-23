@@ -12,15 +12,16 @@ import (
 
 // QuicServer quic
 type QuicServer struct {
-	Handler     func(net.Conn, string)
-	IdleTimeout time.Duration
-	MaxTimeout  time.Duration
-	mu          sync.RWMutex
-	listenerWg  sync.WaitGroup
-	listeners   map[quic.Listener]struct{}
-	conns       map[quic.Stream]struct{}
-	connWg      sync.WaitGroup
-	doneChan    chan struct{}
+	Handler       func(net.Conn, string)
+	IdleTimeout   time.Duration
+	MaxTimeout    time.Duration
+	MaxConnetions int //WIP
+	mu            sync.RWMutex
+	listenerWg    sync.WaitGroup
+	listeners     map[quic.Listener]struct{}
+	conns         map[quic.Stream]struct{}
+	connWg        sync.WaitGroup
+	doneChan      chan struct{}
 }
 
 func (srv *QuicServer) trackConn(c quic.Stream, add bool) {

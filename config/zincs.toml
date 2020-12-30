@@ -1,0 +1,8 @@
+# zincs config
+Listen = "127.0.0.1:8080"
+Root = "D:\\Temp\\root"
+IdleTimeout = "120m"
+ReadTimeout = "360s"
+WriteTimeout = "360s"
+Certificate = "${APPDIR}/config/server.crt"
+CertificateKey = "${APPDIR}/config/server.key"

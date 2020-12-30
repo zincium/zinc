@@ -134,7 +134,11 @@ func (s *Server) exchangeInputOutput(w http.ResponseWriter, r *http.Request, ser
 		renderInternalError(w, err)
 		return
 	}
-	defer stdin.Close()
+	defer func() {
+		if stdin != nil {
+			stdin.Close()
+		}
+	}()
 	if err := cmd.Start(); err != nil {
 		renderInternalError(w, err)
 		return
@@ -154,18 +158,16 @@ func (s *Server) exchangeInputOutput(w http.ResponseWriter, r *http.Request, ser
 	} else {
 		in = r.Body
 	}
+	if _, err := base.Copy(stdin, in); err != nil {
+		renderInternalError(w, err)
+		return
+	}
+	if serviceName == "upload-pack" {
+		stdin.Close()
+		stdin = nil
+	}
 	w.Header().Set("Content-Type", "application/x-git-"+serviceName+"-result")
-	err = base.GroupExecute(
-		func() error {
-			_, err := base.Copy(w, stdout)
-			return err
-		},
-		func() error {
-			_, err := base.Copy(stdin, in)
-			return err
-		},
-	)
-	if err != nil {
+	if _, err := base.Copy(w, stdout); err != nil {
 		sugar.Errorf("exchange %v", err)
 	}
 }

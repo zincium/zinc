@@ -221,6 +221,9 @@ func (srv *Server) Handle(conn net.Conn, mode string) {
 		},
 		func() error {
 			_, err := base.Copy(in, conn)
+			if req.Version == "version=2" && req.Service == "upload-pack" {
+				_ = process.Finalize(cmd)
+			}
 			return err
 		},
 	)

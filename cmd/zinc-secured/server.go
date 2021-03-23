@@ -23,7 +23,7 @@ import (
 // define
 var (
 	null                    = []byte("\x00")
-	ErrMalformedNetworkData = errors.New("Malformed network data")
+	ErrMalformedNetworkData = errors.New("malformed network data")
 )
 
 // Server server
@@ -191,20 +191,20 @@ func (srv *Server) Handle(conn net.Conn, mode string) {
 		cmd.Env = append(cmd.Env, "GIT_PROTOCOL="+req.Version)
 	}
 	base.DbgPrint("cmd: %v\n%v", cmd.Args, req)
-	in, err := cmd.StdinPipe()
+	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		sugar.Errorf("create stdin pipe: %v", err)
 		WriteError(conn, "internal server error")
 		return
 	}
-	defer in.Close()
-	out, err := cmd.StdoutPipe()
+	defer stdin.Close()
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		sugar.Errorf("create stdout pipe: %v", err)
 		WriteError(conn, "internal server error")
 		return
 	}
-	defer out.Close()
+	defer stdout.Close()
 	if err := cmd.Start(); err != nil {
 		// recored error
 		sugar.Errorf("unable create process: %v", err)
@@ -216,11 +216,11 @@ func (srv *Server) Handle(conn net.Conn, mode string) {
 	}()
 	err = base.GroupExecute(
 		func() error {
-			_, err := base.Copy(conn, out)
+			_, err := base.Copy(conn, stdout)
 			return err
 		},
 		func() error {
-			_, err := base.Copy(in, conn)
+			_, err := base.Copy(stdin, conn)
 			if req.Version == "version=2" && req.Service == "upload-pack" {
 				_ = process.Finalize(cmd)
 			}

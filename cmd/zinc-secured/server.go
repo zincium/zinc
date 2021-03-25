@@ -217,13 +217,12 @@ func (srv *Server) Handle(conn net.Conn, mode string) {
 	err = base.GroupExecute(
 		func() error {
 			_, err := base.Copy(conn, stdout)
+			stdout.Close()
 			return err
 		},
 		func() error {
 			_, err := base.Copy(stdin, conn)
-			if req.Version == "version=2" && req.Service == "upload-pack" {
-				_ = process.Finalize(cmd)
-			}
+			stdin.Close()
 			return err
 		},
 	)

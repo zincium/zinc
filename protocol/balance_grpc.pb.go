@@ -11,6 +11,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
 // BalanceClient is the client API for Balance service.
@@ -44,7 +45,7 @@ func (c *balanceClient) Loadavg(ctx context.Context, in *LoadavgRequest, opts ..
 }
 
 func (c *balanceClient) UploadPack(ctx context.Context, opts ...grpc.CallOption) (Balance_UploadPackClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Balance_serviceDesc.Streams[0], "/protocol.Balance/UploadPack", opts...)
+	stream, err := c.cc.NewStream(ctx, &Balance_ServiceDesc.Streams[0], "/protocol.Balance/UploadPack", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +76,7 @@ func (x *balanceUploadPackClient) Recv() (*UploadPackResponse, error) {
 }
 
 func (c *balanceClient) ReceivePack(ctx context.Context, opts ...grpc.CallOption) (Balance_ReceivePackClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Balance_serviceDesc.Streams[1], "/protocol.Balance/ReceivePack", opts...)
+	stream, err := c.cc.NewStream(ctx, &Balance_ServiceDesc.Streams[1], "/protocol.Balance/ReceivePack", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +107,7 @@ func (x *balanceReceivePackClient) Recv() (*ReceivePackResponse, error) {
 }
 
 func (c *balanceClient) LookupRefs(ctx context.Context, in *RefsRequest, opts ...grpc.CallOption) (Balance_LookupRefsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Balance_serviceDesc.Streams[2], "/protocol.Balance/LookupRefs", opts...)
+	stream, err := c.cc.NewStream(ctx, &Balance_ServiceDesc.Streams[2], "/protocol.Balance/LookupRefs", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +139,7 @@ func (x *balanceLookupRefsClient) Recv() (*RefsResponse, error) {
 }
 
 func (c *balanceClient) PostUploadPack(ctx context.Context, opts ...grpc.CallOption) (Balance_PostUploadPackClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Balance_serviceDesc.Streams[3], "/protocol.Balance/PostUploadPack", opts...)
+	stream, err := c.cc.NewStream(ctx, &Balance_ServiceDesc.Streams[3], "/protocol.Balance/PostUploadPack", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +170,7 @@ func (x *balancePostUploadPackClient) Recv() (*PostUploadPackResponse, error) {
 }
 
 func (c *balanceClient) PostReceivePack(ctx context.Context, opts ...grpc.CallOption) (Balance_PostReceivePackClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Balance_serviceDesc.Streams[4], "/protocol.Balance/PostReceivePack", opts...)
+	stream, err := c.cc.NewStream(ctx, &Balance_ServiceDesc.Streams[4], "/protocol.Balance/PostReceivePack", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +258,7 @@ type UnsafeBalanceServer interface {
 }
 
 func RegisterBalanceServer(s grpc.ServiceRegistrar, srv BalanceServer) {
-	s.RegisterService(&_Balance_serviceDesc, srv)
+	s.RegisterService(&Balance_ServiceDesc, srv)
 }
 
 func _Balance_Loadavg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -421,7 +422,10 @@ func _Balance_Negotiate_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Balance_serviceDesc = grpc.ServiceDesc{
+// Balance_ServiceDesc is the grpc.ServiceDesc for Balance service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Balance_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "protocol.Balance",
 	HandlerType: (*BalanceServer)(nil),
 	Methods: []grpc.MethodDesc{

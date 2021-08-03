@@ -6,7 +6,6 @@ require (
 	github.com/andybalholm/brotli v1.0.3
 	github.com/gliderlabs/ssh v0.3.3
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/mux v1.8.0
 	github.com/lucas-clemente/quic-go v0.22.0
 	github.com/pelletier/go-toml v1.9.3

@@ -119,8 +119,5 @@ func (opts *Options) ParseArgv() error {
 	if err := opts.Initialize(expander); err != nil {
 		return err
 	}
-	if opts.background {
-
-	}
 	return nil
 }

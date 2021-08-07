@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 
 	"go.uber.org/zap"
@@ -23,5 +24,7 @@ func main() {
 	}
 	srv := NewServer(&opts)
 	sugar.Info("zincs listen: ", opts.Listen)
-	srv.ListenAndServe(opts.Listen)
+	if err := srv.ListenAndServe(opts.Listen); err != http.ErrServerClosed {
+		sugar.Fatalf("ListenAndServer %v", err)
+	}
 }

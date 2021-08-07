@@ -15,7 +15,9 @@ import (
 
 	"github.com/andybalholm/brotli"
 	"github.com/gorilla/mux"
+	"github.com/klauspost/compress/zstd"
 	"github.com/zincium/zinc/modules/base"
+	"github.com/zincium/zinc/modules/env"
 	"github.com/zincium/zinc/modules/shadow"
 )
 
@@ -66,7 +68,7 @@ func renderInternalError(w http.ResponseWriter, err error) {
 }
 
 func (s *Server) lookupReferences(w http.ResponseWriter, r *http.Request, serviceName string, cmd *exec.Cmd) {
-	cmd.Env = os.Environ()
+	cmd.Env = env.Environ()
 	version := r.Header.Get("Git-Protocol")
 	if len(version) != 0 {
 		cmd.Env = append(cmd.Env, "GIT_PROTOCOL="+version)
@@ -117,7 +119,7 @@ func (s *Server) handleReceivePackRefs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) exchangeInputOutput(w http.ResponseWriter, r *http.Request, serviceName string, cmd *exec.Cmd) {
-	cmd.Env = os.Environ()
+	cmd.Env = env.Environ()
 	version := r.Header.Get("Git-Protocol")
 	if len(version) != 0 {
 		cmd.Env = append(cmd.Env, "GIT_PROTOCOL="+version)
@@ -143,22 +145,28 @@ func (s *Server) exchangeInputOutput(w http.ResponseWriter, r *http.Request, ser
 		renderInternalError(w, err)
 		return
 	}
-	var in io.Reader
-	enc := r.Header.Get("Content-Encoding")
-	if strings.Contains(enc, "gzip") {
-		gr, err := gzip.NewReader(r.Body)
-		if err != nil {
-			renderInternalError(w, err)
+	var rc io.ReadCloser
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding
+	// Accept-Encoding: gzip, deflate
+	// Content-Encoding: gzip
+	switch r.Header.Get("Content-Encoding") {
+	case "gzip":
+		if rc, err = gzip.NewReader(r.Body); err != nil {
 			return
 		}
-		defer gr.Close()
-		in = gr
-	} else if strings.Contains(enc, "br") {
-		in = brotli.NewReader(r.Body)
-	} else {
-		in = r.Body
+	case "br":
+		rc = io.NopCloser(brotli.NewReader(r.Body))
+	case "zstd":
+		zr, err := zstd.NewReader(r.Body, nil)
+		if err != nil {
+			return
+		}
+		rc = zr.IOReadCloser()
+	default:
+		rc = io.NopCloser(r.Body)
 	}
-	if _, err := base.Copy(stdin, in); err != nil {
+	defer rc.Close()
+	if _, err := base.Copy(stdin, rc); err != nil {
 		renderInternalError(w, err)
 		return
 	}
@@ -224,5 +232,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Server", ServerVersion)
 	hw := shadow.NewResponseWriter(w)
 	s.r.ServeHTTP(hw, r)
-	sugar.Infof("%s %s %s status: %d body: %d spend: %v\n", hw.RequestID(), r.Method, r.RequestURI, hw.StatusCode(), hw.Written(), hw.Since())
+	sugar.Infof("%s %s %s status: %d body: %d spend: %v\n",
+		hw.RequestID(), r.Method, r.RequestURI, hw.StatusCode(), hw.Written(), hw.Since())
 }

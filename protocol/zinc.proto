@@ -1,0 +1,21 @@
+// zin balance protocol
+// https://grpc.io/docs/languages/go/quickstart/
+
+syntax = "proto3";
+
+option go_package = "github.com/zincium/zinc/protocol";
+
+package protocol;
+
+message Repository {
+  // repo id
+  int64 id = 1;
+  // repo size limit
+  int64 size_limit = 2;
+  // repo file limit
+  int64 file_limit = 3;
+  // repoPath := filepath.Join(root, location) + ".git"
+  string location = 4;
+  // repo storage nodes
+  repeated string storage_node = 5; // eg: n1.storage.git.io
+}

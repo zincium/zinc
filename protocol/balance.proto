@@ -5,20 +5,23 @@ syntax = "proto3";
 
 option go_package = "github.com/zincium/zinc/protocol";
 
+import "zinc.proto";
+
 package protocol;
 
 // The balance service definition.
 service Balance {
-  rpc Loadavg(LoadavgRequest) returns(LoadavgResponse) {}
-  rpc UploadPack(stream UploadPackRequest) returns(stream UploadPackResponse) {}
+  rpc Loadavg(LoadavgRequest) returns (LoadavgResponse) {}
+  rpc UploadPack(stream UploadPackRequest) returns (stream UploadPackResponse) {
+  }
   rpc ReceivePack(stream ReceivePackRequest)
-      returns(stream ReceivePackResponse) {}
-  rpc LookupRefs(RefsRequest) returns(stream RefsResponse) {}
+      returns (stream ReceivePackResponse) {}
+  rpc LookupRefs(RefsRequest) returns (stream RefsResponse) {}
   rpc PostUploadPack(stream PostUploadPackRequest)
-      returns(stream PostUploadPackResponse) {}
+      returns (stream PostUploadPackResponse) {}
   rpc PostReceivePack(stream PostReceivePackRequest)
-      returns(stream PostReceivePackResponse) {}
-  rpc Negotiate(NegotiateRequest) returns(NegotiateResponse) {}
+      returns (stream PostReceivePackResponse) {}
+  rpc Negotiate(NegotiateRequest) returns (NegotiateResponse) {}
 }
 
 message LoadavgRequest {}
@@ -50,7 +53,11 @@ message NegotiateResponse {
 }
 
 message UploadPackRequest {
-  enum Filter { DEFAULT = 0; EXTENDED = 1; ALL = 2; }
+  enum Filter {
+    DEFAULT = 0;
+    EXTENDED = 1;
+    ALL = 2;
+  }
   string location = 1;
   bytes stdin = 2; // input
   string protocol = 3;
@@ -84,8 +91,15 @@ message ReceivePackResponse {
 
 // HTTP
 message RefsRequest {
-  enum Filter { DEFAULT = 0; EXTENDED = 1; ALL = 2; }
-  enum Mode { UPLOADPACK = 0; RECEIVEPACK = 1; }
+  enum Filter {
+    DEFAULT = 0;
+    EXTENDED = 1;
+    ALL = 2;
+  }
+  enum Mode {
+    UPLOADPACK = 0;
+    RECEIVEPACK = 1;
+  }
   string hash = 1;
   string location = 2;
   string protocol = 3;

@@ -78,7 +78,7 @@ func (srv *Server) listenAndServeTCP(opts *Options) error {
 	}
 	srv.srv = &server.Server{Handler: srv.Handle, MaxTimeout: opts.maxTimeout, IdleTimeout: opts.idleTimeout}
 	sugar.Infof("listen %s (tcp)", opts.Listen)
-	if err := srv.tlssrv.ListenAndServe(opts.Listen); err != nil && err != server.ErrServerClosed {
+	if err := srv.srv.ListenAndServe(opts.Listen); err != nil && err != server.ErrServerClosed {
 		sugar.Fatalf("ListenAndServe tls://%s error: %v", opts.TLSListen, err)
 	}
 	return nil

@@ -210,7 +210,7 @@ func (c *balanceClient) Negotiate(ctx context.Context, in *NegotiateRequest, opt
 }
 
 // BalanceServer is the server API for Balance service.
-// All implementations must embed UnimplementedBalanceServer
+// All implementations should embed UnimplementedBalanceServer
 // for forward compatibility
 type BalanceServer interface {
 	Loadavg(context.Context, *LoadavgRequest) (*LoadavgResponse, error)
@@ -220,10 +220,9 @@ type BalanceServer interface {
 	PostUploadPack(Balance_PostUploadPackServer) error
 	PostReceivePack(Balance_PostReceivePackServer) error
 	Negotiate(context.Context, *NegotiateRequest) (*NegotiateResponse, error)
-	mustEmbedUnimplementedBalanceServer()
 }
 
-// UnimplementedBalanceServer must be embedded to have forward compatible implementations.
+// UnimplementedBalanceServer should be embedded to have forward compatible implementations.
 type UnimplementedBalanceServer struct {
 }
 
@@ -248,7 +247,6 @@ func (UnimplementedBalanceServer) PostReceivePack(Balance_PostReceivePackServer)
 func (UnimplementedBalanceServer) Negotiate(context.Context, *NegotiateRequest) (*NegotiateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Negotiate not implemented")
 }
-func (UnimplementedBalanceServer) mustEmbedUnimplementedBalanceServer() {}
 
 // UnsafeBalanceServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to BalanceServer will

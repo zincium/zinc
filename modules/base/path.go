@@ -9,7 +9,19 @@ import (
 
 var (
 	ErrDangerousPathAccessDenied = errors.New("dangerous path access denied")
+	CaseInsensitive              = false
 )
+
+func isChildPathFast(path, parent string) bool {
+	if CaseInsensitive {
+		parent = strings.ToLower(parent)
+		path = strings.ToLower(parent)
+	}
+	if len(parent) >= len(path) {
+		return false
+	}
+	return strings.HasPrefix(path, parent) && path[len(parent)] == os.PathSeparator
+}
 
 func JoinSanitizePath(parent string, elem ...string) (string, error) {
 	var buf strings.Builder
@@ -19,7 +31,7 @@ func JoinSanitizePath(parent string, elem ...string) (string, error) {
 		_, _ = buf.WriteString(e)
 	}
 	cleanedPath := filepath.Clean(buf.String())
-	if !strings.HasPrefix(cleanedPath, parent) || cleanedPath[len(parent)] != os.PathSeparator {
+	if !isChildPathFast(cleanedPath, parent) {
 		return "", ErrDangerousPathAccessDenied
 	}
 	return cleanedPath, nil

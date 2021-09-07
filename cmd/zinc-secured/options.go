@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/pelletier/go-toml"
@@ -78,6 +79,7 @@ func (opts *Options) Initialize(expander *env.Expander) error {
 	if opts.GitPath == "" {
 		opts.GitPath = "git"
 	}
+	opts.Root = filepath.Clean(opts.Root)
 	return nil
 }
 

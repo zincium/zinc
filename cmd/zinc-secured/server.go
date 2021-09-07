@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing/format/pktline"
@@ -152,7 +151,10 @@ func (srv *Server) readRequest(conn net.Conn) (*Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Path = filepath.Join(srv.Root, u.Path)
+	req.Path, err = base.JoinSanitizePath(srv.Root, u.Path)
+	if err != nil {
+		return nil, err
+	}
 	if _, err := os.Stat(req.Path); err != nil && os.IsNotExist(err) {
 		return nil, fmt.Errorf("repository '%s' not found", u.Path)
 	}

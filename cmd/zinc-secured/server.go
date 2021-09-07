@@ -166,7 +166,7 @@ func (srv *Server) readRequest(conn net.Conn) (*Request, error) {
 // WriteError write error
 func WriteError(conn net.Conn, msg string) {
 	enc := pktline.NewEncoder(conn)
-	_ = enc.EncodeString(msg + "\n")
+	_ = enc.EncodeString("ERR " + msg + "\n")
 	_ = enc.Flush()
 }
 

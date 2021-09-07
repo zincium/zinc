@@ -9,14 +9,9 @@ import (
 
 var (
 	ErrDangerousPathAccessDenied = errors.New("dangerous path access denied")
-	CaseInsensitive              = false
 )
 
 func isChildPathFast(path, parent string) bool {
-	if CaseInsensitive {
-		parent = strings.ToLower(parent)
-		path = strings.ToLower(parent)
-	}
 	if len(parent) >= len(path) {
 		return false
 	}

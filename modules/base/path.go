@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -19,10 +20,16 @@ func JoinSanitizePath(parent string, elem ...string) (string, error) {
 		_, _ = buf.WriteString(e)
 	}
 	out := filepath.Clean(buf.String())
-	if len(out) <= len(parent) || out[len(parent)] != os.PathSeparator || !strings.HasPrefix(out,parent) {
+	if len(out) <= len(parent) {
 		return "", ErrDangerousPathAccessDenied
 	}
-	return cleanedPath, nil
+	if strings.HasPrefix(out, parent) && os.IsPathSeparator(out[len(parent)]) {
+		return out, nil
+	}
+	if runtime.GOOS != "windows" && parent == "/" {
+		return out, nil
+	}
+	return "", ErrDangerousPathAccessDenied
 }
 
 func JoinSanitizePathSlow(parent string, elem ...string) (string, error) {

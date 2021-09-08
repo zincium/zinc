@@ -1,4 +1,4 @@
-// zin balance protocol
+// zinc balance protocol
 // https://grpc.io/docs/languages/go/quickstart/
 
 syntax = "proto3";

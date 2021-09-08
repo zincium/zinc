@@ -1,0 +1,45 @@
+// zinc auth protocol
+// https://grpc.io/docs/languages/go/quickstart/
+
+syntax = "proto3";
+
+option go_package = "github.com/zincium/zinc/protocol";
+
+enum AccessAction {
+  DOWNLOAD = 0;
+  UPLOAD = 1;
+  ARCHIVE = 2;
+}
+
+message BasicAuthRequest {
+  // HTTP auth username
+  string username = 1;
+  // HTTP auth password
+  string password = 2;
+  // current repository relative path
+  string relative_path = 3;
+  AccessAction action = 4;
+}
+
+message KeyAuthRequest {
+  // SHA256 SSH key fingerprint
+  string fingerprint = 1;
+  string relative_path = 2;
+  AccessAction action = 3;
+}
+
+message AuthResponse {
+  // current user id if not exists == 0
+  int64 uid = 1;
+  // current repository id
+  int64 rid = 2;
+  // current repository storage name address
+  string storage_name = 3;
+  // current repository real location in disk
+  string location = 4;
+}
+
+service Authorization {
+  rpc BasicAuth(BasicAuthRequest) returns (AuthResponse);
+  rpc KeyAuth(KeyAuthRequest) returns (AuthResponse);
+}

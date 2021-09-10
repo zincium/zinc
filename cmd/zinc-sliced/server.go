@@ -58,12 +58,15 @@ func (s *Server) UploadPack(stream sliced.Slicer_UploadPackServer) error {
 	fmt.Fprintf(os.Stderr, "args: %s\n", strings.Join(cmd.Args, " "))
 	return nil
 }
+
 func (s *Server) ReceivePack(stream sliced.Slicer_ReceivePackServer) error {
 	return nil
 }
-func (s *Server) AdvertiseRefs(stream sliced.Slicer_AdvertiseRefsServer) error {
+
+func (s *Server) AdvertiseRefs(req *sliced.RefsRequest, stream sliced.Slicer_AdvertiseRefsServer) error {
 	return nil
 }
+
 func (s *Server) PostUploadPack(stream sliced.Slicer_PostUploadPackServer) error {
 
 	return nil

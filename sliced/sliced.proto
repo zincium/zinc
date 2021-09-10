@@ -8,7 +8,7 @@ option go_package = "github.com/zincium/zinc/sliced";
 service Slicer {
   rpc UploadPack(stream UploadPackRequest) returns (stream UploadPackResponse);
   rpc ReceivePack(stream ReceivePackRequest) returns (stream ReceivePackResponse);
-  rpc AdvertiseRefs(stream RefsRequest) returns (stream RefsResponse);
+  rpc AdvertiseRefs(RefsRequest) returns (stream RefsResponse);
   rpc PostUploadPack(stream PostUploadPackRequest) returns (stream PostUploadPackResponse);
   rpc PostReceivePack(stream PostReceivePackRequest) returns (stream PostReceivePackResponse);
 }

@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type SlicerClient interface {
 	UploadPack(ctx context.Context, opts ...grpc.CallOption) (Slicer_UploadPackClient, error)
 	ReceivePack(ctx context.Context, opts ...grpc.CallOption) (Slicer_ReceivePackClient, error)
-	AdvertiseRefs(ctx context.Context, opts ...grpc.CallOption) (Slicer_AdvertiseRefsClient, error)
+	AdvertiseRefs(ctx context.Context, in *RefsRequest, opts ...grpc.CallOption) (Slicer_AdvertiseRefsClient, error)
 	PostUploadPack(ctx context.Context, opts ...grpc.CallOption) (Slicer_PostUploadPackClient, error)
 	PostReceivePack(ctx context.Context, opts ...grpc.CallOption) (Slicer_PostReceivePackClient, error)
 }
@@ -95,27 +95,28 @@ func (x *slicerReceivePackClient) Recv() (*ReceivePackResponse, error) {
 	return m, nil
 }
 
-func (c *slicerClient) AdvertiseRefs(ctx context.Context, opts ...grpc.CallOption) (Slicer_AdvertiseRefsClient, error) {
+func (c *slicerClient) AdvertiseRefs(ctx context.Context, in *RefsRequest, opts ...grpc.CallOption) (Slicer_AdvertiseRefsClient, error) {
 	stream, err := c.cc.NewStream(ctx, &Slicer_ServiceDesc.Streams[2], "/Slicer/AdvertiseRefs", opts...)
 	if err != nil {
 		return nil, err
 	}
 	x := &slicerAdvertiseRefsClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
 	return x, nil
 }
 
 type Slicer_AdvertiseRefsClient interface {
-	Send(*RefsRequest) error
 	Recv() (*RefsResponse, error)
 	grpc.ClientStream
 }
 
 type slicerAdvertiseRefsClient struct {
 	grpc.ClientStream
-}
-
-func (x *slicerAdvertiseRefsClient) Send(m *RefsRequest) error {
-	return x.ClientStream.SendMsg(m)
 }
 
 func (x *slicerAdvertiseRefsClient) Recv() (*RefsResponse, error) {
@@ -194,7 +195,7 @@ func (x *slicerPostReceivePackClient) Recv() (*PostReceivePackResponse, error) {
 type SlicerServer interface {
 	UploadPack(Slicer_UploadPackServer) error
 	ReceivePack(Slicer_ReceivePackServer) error
-	AdvertiseRefs(Slicer_AdvertiseRefsServer) error
+	AdvertiseRefs(*RefsRequest, Slicer_AdvertiseRefsServer) error
 	PostUploadPack(Slicer_PostUploadPackServer) error
 	PostReceivePack(Slicer_PostReceivePackServer) error
 }
@@ -209,7 +210,7 @@ func (UnimplementedSlicerServer) UploadPack(Slicer_UploadPackServer) error {
 func (UnimplementedSlicerServer) ReceivePack(Slicer_ReceivePackServer) error {
 	return status.Errorf(codes.Unimplemented, "method ReceivePack not implemented")
 }
-func (UnimplementedSlicerServer) AdvertiseRefs(Slicer_AdvertiseRefsServer) error {
+func (UnimplementedSlicerServer) AdvertiseRefs(*RefsRequest, Slicer_AdvertiseRefsServer) error {
 	return status.Errorf(codes.Unimplemented, "method AdvertiseRefs not implemented")
 }
 func (UnimplementedSlicerServer) PostUploadPack(Slicer_PostUploadPackServer) error {
@@ -283,12 +284,15 @@ func (x *slicerReceivePackServer) Recv() (*ReceivePackRequest, error) {
 }
 
 func _Slicer_AdvertiseRefs_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(SlicerServer).AdvertiseRefs(&slicerAdvertiseRefsServer{stream})
+	m := new(RefsRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SlicerServer).AdvertiseRefs(m, &slicerAdvertiseRefsServer{stream})
 }
 
 type Slicer_AdvertiseRefsServer interface {
 	Send(*RefsResponse) error
-	Recv() (*RefsRequest, error)
 	grpc.ServerStream
 }
 
@@ -298,14 +302,6 @@ type slicerAdvertiseRefsServer struct {
 
 func (x *slicerAdvertiseRefsServer) Send(m *RefsResponse) error {
 	return x.ServerStream.SendMsg(m)
-}
-
-func (x *slicerAdvertiseRefsServer) Recv() (*RefsRequest, error) {
-	m := new(RefsRequest)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
 }
 
 func _Slicer_PostUploadPack_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -384,7 +380,6 @@ var Slicer_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "AdvertiseRefs",
 			Handler:       _Slicer_AdvertiseRefs_Handler,
 			ServerStreams: true,
-			ClientStreams: true,
 		},
 		{
 			StreamName:    "PostUploadPack",

@@ -1,0 +1,119 @@
+// zinc balance protocol
+// https://grpc.io/docs/languages/go/quickstart/
+
+syntax = "proto3";
+
+option go_package = "github.com/zincium/zinc/sliced";
+
+service Slicer {
+  rpc UploadPack(stream UploadPackRequest) returns (stream UploadPackResponse);
+  rpc ReceivePack(stream ReceivePackRequest) returns (stream ReceivePackResponse);
+  rpc AdvertiseRefs(stream RefsRequest) returns (stream RefsResponse);
+  rpc PostUploadPack(stream PostUploadPackRequest) returns (stream PostUploadPackResponse);
+  rpc PostReceivePack(stream PostReceivePackRequest) returns (stream PostReceivePackResponse);
+}
+
+// repository basic type
+message Repository {
+  // repo id
+  int64 id = 1;
+  // repoPath := filepath.Join(root, location) + ".git"
+  string location = 2;
+  // repo storage nodes
+  repeated string snapshot_storage_node = 3; // eg: n1.storage.git.io
+}
+
+// Git over SSH fetch/clone request
+message UploadPackRequest {
+  Repository repo = 1;
+  int64 uid = 2;
+  // git-upload-pack stdin
+  bytes stdin = 3;
+  // eg: version=2
+  string protocol = 4;
+}
+
+// Git over SSH fetch/clone response
+message UploadPackResponse {
+  // git-upload-pack stdout
+  bytes stdout = 1;
+  // git-upload-pack stderr
+  bytes stderr = 2;
+  // git-upload-pack exit code
+  int32 exit_code = 3;
+}
+
+// Git over SSH push request
+message ReceivePackRequest {
+  Repository repo = 1;
+  int64 uid = 2;
+  // git-receive-pack stdin
+  bytes stdin = 3;
+  // eg: version=2
+  string protocol = 4;
+}
+
+// Git over SSH push request
+message ReceivePackResponse {
+  // git-receive-pack stdout
+  bytes stdout = 1;
+  // git-receive-pack stderr
+  bytes stderr = 2;
+  // git-receive-pack exit code
+  int32 exit_code = 3;
+}
+
+// Git over HTTP get refs request
+message RefsRequest {
+  Repository repo = 1;
+  int64 uid = 2;
+  string service_name = 3;
+  // eg: version=2
+  string protocol = 4;
+}
+
+// Git over HTTP get refs response
+message RefsResponse {
+  // git-upload-pack stdout
+  // git-receive-pack stdout
+  bytes stdout = 1;
+}
+
+// Git Over HTTP fetch/clone request (POST request body)
+message PostUploadPackRequest {
+  Repository repo = 1;
+  // git-upload-pack stdin
+  bytes stdin = 2;
+  // eg: version=2
+  string protocol = 3;
+}
+
+// Git Over HTTP fetch/clone response (POST response body)
+message PostUploadPackResponse {
+  // git-upload-pack stdout
+  bytes stdout = 1;
+  // git-upload-pack stderr
+  bytes stderr = 2;
+  // git-upload-pack exit code
+  int32 exit_code = 3;
+}
+
+// Git Over HTTP push request (POST request body)
+message PostReceivePackRequest {
+  Repository repo = 1;
+  int64 uid = 2;
+  // git-receive-pack stdin
+  bytes stdin = 3;
+  // eg: version=2
+  string protocol = 4;
+}
+
+// Git Over HTTP push response (POST response body)
+message PostReceivePackResponse {
+  // git-receive-pack stdout
+  bytes stdout = 1;
+  // git-receive-pack stderr
+  bytes stderr = 2;
+  // git-receive-pack exit code
+  int32 exit_code = 3;
+}

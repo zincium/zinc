@@ -8,7 +8,7 @@ import (
 
 func ErrorIsAddressInUse(err error) bool {
 	var netErrno syscall.Errno
-	if ok := errors.As(err, &netErrno); !ok {
+	if !errors.As(err, &netErrno) {
 		return false
 	}
 	if netErrno == syscall.EADDRINUSE {

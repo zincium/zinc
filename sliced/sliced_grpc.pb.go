@@ -19,10 +19,13 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SlicerClient interface {
 	// To forward 'git upload-pack' to zinc-sliced for SSH sessions
+	// First pack stdin is nil
 	UploadPack(ctx context.Context, opts ...grpc.CallOption) (Slicer_UploadPackClient, error)
 	// To forward 'git receive-pack' to zinc-sliced for SSH sessions
+	// First pack stdin is nil
 	ReceivePack(ctx context.Context, opts ...grpc.CallOption) (Slicer_ReceivePackClient, error)
 	// To forward 'git upload-archive' to zinc-sliced for SSH sessions
+	// First pack stdin is nil
 	UploadArchive(ctx context.Context, opts ...grpc.CallOption) (Slicer_UploadArchiveClient, error)
 	// The response body for GET /info/refs?service=git-upload-pack
 	// Will be invoked when the user executes a `git fetch`, meaning the server
@@ -33,8 +36,10 @@ type SlicerClient interface {
 	// references to the user.
 	InfoRefsReceivePack(ctx context.Context, in *InfoRefsRequest, opts ...grpc.CallOption) (Slicer_InfoRefsReceivePackClient, error)
 	// Request and response body for POST /upload-pack
+	// First pack stdin is nil
 	PostUploadPack(ctx context.Context, opts ...grpc.CallOption) (Slicer_PostUploadPackClient, error)
 	// Request and response body for POST /receive-pack
+	// First pack stdin is nil
 	PostReceivePack(ctx context.Context, opts ...grpc.CallOption) (Slicer_PostReceivePackClient, error)
 }
 
@@ -270,10 +275,13 @@ func (x *slicerPostReceivePackClient) Recv() (*PostReceivePackResponse, error) {
 // for forward compatibility
 type SlicerServer interface {
 	// To forward 'git upload-pack' to zinc-sliced for SSH sessions
+	// First pack stdin is nil
 	UploadPack(Slicer_UploadPackServer) error
 	// To forward 'git receive-pack' to zinc-sliced for SSH sessions
+	// First pack stdin is nil
 	ReceivePack(Slicer_ReceivePackServer) error
 	// To forward 'git upload-archive' to zinc-sliced for SSH sessions
+	// First pack stdin is nil
 	UploadArchive(Slicer_UploadArchiveServer) error
 	// The response body for GET /info/refs?service=git-upload-pack
 	// Will be invoked when the user executes a `git fetch`, meaning the server
@@ -284,8 +292,10 @@ type SlicerServer interface {
 	// references to the user.
 	InfoRefsReceivePack(*InfoRefsRequest, Slicer_InfoRefsReceivePackServer) error
 	// Request and response body for POST /upload-pack
+	// First pack stdin is nil
 	PostUploadPack(Slicer_PostUploadPackServer) error
 	// Request and response body for POST /receive-pack
+	// First pack stdin is nil
 	PostReceivePack(Slicer_PostReceivePackServer) error
 }
 

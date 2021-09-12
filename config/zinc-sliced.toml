@@ -1,0 +1,4 @@
+# defined
+Listen = "127.0.0.1:2048"
+GitPath = "git"
+Root = "D:\\storage\\repositories"

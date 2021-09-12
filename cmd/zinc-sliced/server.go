@@ -15,32 +15,33 @@ import (
 )
 
 type ServerOptions struct {
-	Root string
+	GitPath string
+	Root    string
 }
 
 type Server struct {
+	*grpc.Server
 	opt *ServerOptions
-	srv *grpc.Server
 }
 
 func NewServer(opt *ServerOptions) *Server {
-	return &Server{opt: opt, srv: grpc.NewServer()}
+	return &Server{opt: opt, Server: grpc.NewServer()}
 }
 
 func (s *Server) Shutdown(ctx context.Context) {
-	if s.srv == nil {
-		s.srv.GracefulStop()
+	if s.Server == nil {
+		s.Server.GracefulStop()
 	}
 
 }
 
 func (s *Server) ListenAndServe(listen string) error {
-	sliced.RegisterSlicerServer(s.srv, s)
+	sliced.RegisterSlicerServer(s, s)
 	ln, err := net.Listen("tcp", listen)
 	if err != nil {
 		return err
 	}
-	return s.srv.Serve(ln)
+	return s.Serve(ln)
 }
 
 func (s *Server) UploadPack(stream sliced.Slicer_UploadPackServer) error {
@@ -63,7 +64,15 @@ func (s *Server) ReceivePack(stream sliced.Slicer_ReceivePackServer) error {
 	return nil
 }
 
-func (s *Server) AdvertiseRefs(req *sliced.RefsRequest, stream sliced.Slicer_AdvertiseRefsServer) error {
+func (s *Server) UploadArchive(stream sliced.Slicer_UploadArchiveServer) error {
+	return nil
+}
+
+func (s *Server) InfoRefsUploadPack(req *sliced.InfoRefsRequest, stream sliced.Slicer_InfoRefsUploadPackServer) error {
+	return nil
+}
+
+func (s *Server) InfoRefsReceivePack(req *sliced.InfoRefsRequest, stream sliced.Slicer_InfoRefsReceivePackServer) error {
 	return nil
 }
 

@@ -6,10 +6,23 @@ syntax = "proto3";
 option go_package = "github.com/zincium/zinc/sliced";
 
 service Slicer {
+  // To forward 'git upload-pack' to zinc-sliced for SSH sessions
   rpc UploadPack(stream UploadPackRequest) returns (stream UploadPackResponse);
+  // To forward 'git receive-pack' to zinc-sliced for SSH sessions
   rpc ReceivePack(stream ReceivePackRequest) returns (stream ReceivePackResponse);
-  rpc AdvertiseRefs(RefsRequest) returns (stream RefsResponse);
+  // To forward 'git upload-archive' to zinc-sliced for SSH sessions
+  rpc UploadArchive(stream UploadArchiveRequest) returns (stream UploadArchiveResponse);
+  // The response body for GET /info/refs?service=git-upload-pack
+  // Will be invoked when the user executes a `git fetch`, meaning the server
+  // will upload the packs to that user. The user doesn't upload new objects.
+  rpc InfoRefsUploadPack(InfoRefsRequest) returns (stream InfoRefsResponse);
+  // The response body for GET /info/refs?service=git-receive-pack
+  // Will be invoked when the user executes a `git push`, but only advertises
+  // references to the user.
+  rpc InfoRefsReceivePack(InfoRefsRequest) returns (stream InfoRefsResponse);
+  // Request and response body for POST /upload-pack
   rpc PostUploadPack(stream PostUploadPackRequest) returns (stream PostUploadPackResponse);
+  // Request and response body for POST /receive-pack
   rpc PostReceivePack(stream PostReceivePackRequest) returns (stream PostReceivePackResponse);
 }
 
@@ -64,7 +77,7 @@ message ReceivePackResponse {
 }
 
 // Git over HTTP get refs request
-message RefsRequest {
+message InfoRefsRequest {
   Repository repo = 1;
   int64 uid = 2;
   string service_name = 3;
@@ -73,7 +86,7 @@ message RefsRequest {
 }
 
 // Git over HTTP get refs response
-message RefsResponse {
+message InfoRefsResponse {
   // git-upload-pack stdout
   // git-receive-pack stdout
   bytes stdout = 1;
@@ -116,4 +129,20 @@ message PostReceivePackResponse {
   bytes stderr = 2;
   // git-receive-pack exit code
   int32 exit_code = 3;
+}
+
+message UploadArchiveRequest {
+  // 'repository' must be present in the first message.
+  Repository repository = 1;
+  // A chunk of raw data to be copied to 'git upload-archive' standard input
+  bytes stdin = 2;
+}
+
+message UploadArchiveResponse {
+  // A chunk of raw data from 'git upload-archive' standard output
+  bytes stdout = 1;
+  // A chunk of raw data from 'git upload-archive' standard error
+  bytes stderr = 2;
+  // This value will only be set on the last message
+  int32 exit_status = 3;
 }

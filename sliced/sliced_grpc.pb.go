@@ -18,10 +18,23 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SlicerClient interface {
+	// To forward 'git upload-pack' to zinc-sliced for SSH sessions
 	UploadPack(ctx context.Context, opts ...grpc.CallOption) (Slicer_UploadPackClient, error)
+	// To forward 'git receive-pack' to zinc-sliced for SSH sessions
 	ReceivePack(ctx context.Context, opts ...grpc.CallOption) (Slicer_ReceivePackClient, error)
-	AdvertiseRefs(ctx context.Context, in *RefsRequest, opts ...grpc.CallOption) (Slicer_AdvertiseRefsClient, error)
+	// To forward 'git upload-archive' to zinc-sliced for SSH sessions
+	UploadArchive(ctx context.Context, opts ...grpc.CallOption) (Slicer_UploadArchiveClient, error)
+	// The response body for GET /info/refs?service=git-upload-pack
+	// Will be invoked when the user executes a `git fetch`, meaning the server
+	// will upload the packs to that user. The user doesn't upload new objects.
+	InfoRefsUploadPack(ctx context.Context, in *InfoRefsRequest, opts ...grpc.CallOption) (Slicer_InfoRefsUploadPackClient, error)
+	// The response body for GET /info/refs?service=git-receive-pack
+	// Will be invoked when the user executes a `git push`, but only advertises
+	// references to the user.
+	InfoRefsReceivePack(ctx context.Context, in *InfoRefsRequest, opts ...grpc.CallOption) (Slicer_InfoRefsReceivePackClient, error)
+	// Request and response body for POST /upload-pack
 	PostUploadPack(ctx context.Context, opts ...grpc.CallOption) (Slicer_PostUploadPackClient, error)
+	// Request and response body for POST /receive-pack
 	PostReceivePack(ctx context.Context, opts ...grpc.CallOption) (Slicer_PostReceivePackClient, error)
 }
 
@@ -95,12 +108,43 @@ func (x *slicerReceivePackClient) Recv() (*ReceivePackResponse, error) {
 	return m, nil
 }
 
-func (c *slicerClient) AdvertiseRefs(ctx context.Context, in *RefsRequest, opts ...grpc.CallOption) (Slicer_AdvertiseRefsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Slicer_ServiceDesc.Streams[2], "/Slicer/AdvertiseRefs", opts...)
+func (c *slicerClient) UploadArchive(ctx context.Context, opts ...grpc.CallOption) (Slicer_UploadArchiveClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Slicer_ServiceDesc.Streams[2], "/Slicer/UploadArchive", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &slicerAdvertiseRefsClient{stream}
+	x := &slicerUploadArchiveClient{stream}
+	return x, nil
+}
+
+type Slicer_UploadArchiveClient interface {
+	Send(*UploadArchiveRequest) error
+	Recv() (*UploadArchiveResponse, error)
+	grpc.ClientStream
+}
+
+type slicerUploadArchiveClient struct {
+	grpc.ClientStream
+}
+
+func (x *slicerUploadArchiveClient) Send(m *UploadArchiveRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *slicerUploadArchiveClient) Recv() (*UploadArchiveResponse, error) {
+	m := new(UploadArchiveResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *slicerClient) InfoRefsUploadPack(ctx context.Context, in *InfoRefsRequest, opts ...grpc.CallOption) (Slicer_InfoRefsUploadPackClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Slicer_ServiceDesc.Streams[3], "/Slicer/InfoRefsUploadPack", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &slicerInfoRefsUploadPackClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -110,17 +154,49 @@ func (c *slicerClient) AdvertiseRefs(ctx context.Context, in *RefsRequest, opts 
 	return x, nil
 }
 
-type Slicer_AdvertiseRefsClient interface {
-	Recv() (*RefsResponse, error)
+type Slicer_InfoRefsUploadPackClient interface {
+	Recv() (*InfoRefsResponse, error)
 	grpc.ClientStream
 }
 
-type slicerAdvertiseRefsClient struct {
+type slicerInfoRefsUploadPackClient struct {
 	grpc.ClientStream
 }
 
-func (x *slicerAdvertiseRefsClient) Recv() (*RefsResponse, error) {
-	m := new(RefsResponse)
+func (x *slicerInfoRefsUploadPackClient) Recv() (*InfoRefsResponse, error) {
+	m := new(InfoRefsResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *slicerClient) InfoRefsReceivePack(ctx context.Context, in *InfoRefsRequest, opts ...grpc.CallOption) (Slicer_InfoRefsReceivePackClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Slicer_ServiceDesc.Streams[4], "/Slicer/InfoRefsReceivePack", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &slicerInfoRefsReceivePackClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Slicer_InfoRefsReceivePackClient interface {
+	Recv() (*InfoRefsResponse, error)
+	grpc.ClientStream
+}
+
+type slicerInfoRefsReceivePackClient struct {
+	grpc.ClientStream
+}
+
+func (x *slicerInfoRefsReceivePackClient) Recv() (*InfoRefsResponse, error) {
+	m := new(InfoRefsResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -128,7 +204,7 @@ func (x *slicerAdvertiseRefsClient) Recv() (*RefsResponse, error) {
 }
 
 func (c *slicerClient) PostUploadPack(ctx context.Context, opts ...grpc.CallOption) (Slicer_PostUploadPackClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Slicer_ServiceDesc.Streams[3], "/Slicer/PostUploadPack", opts...)
+	stream, err := c.cc.NewStream(ctx, &Slicer_ServiceDesc.Streams[5], "/Slicer/PostUploadPack", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +235,7 @@ func (x *slicerPostUploadPackClient) Recv() (*PostUploadPackResponse, error) {
 }
 
 func (c *slicerClient) PostReceivePack(ctx context.Context, opts ...grpc.CallOption) (Slicer_PostReceivePackClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Slicer_ServiceDesc.Streams[4], "/Slicer/PostReceivePack", opts...)
+	stream, err := c.cc.NewStream(ctx, &Slicer_ServiceDesc.Streams[6], "/Slicer/PostReceivePack", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -193,10 +269,23 @@ func (x *slicerPostReceivePackClient) Recv() (*PostReceivePackResponse, error) {
 // All implementations should embed UnimplementedSlicerServer
 // for forward compatibility
 type SlicerServer interface {
+	// To forward 'git upload-pack' to zinc-sliced for SSH sessions
 	UploadPack(Slicer_UploadPackServer) error
+	// To forward 'git receive-pack' to zinc-sliced for SSH sessions
 	ReceivePack(Slicer_ReceivePackServer) error
-	AdvertiseRefs(*RefsRequest, Slicer_AdvertiseRefsServer) error
+	// To forward 'git upload-archive' to zinc-sliced for SSH sessions
+	UploadArchive(Slicer_UploadArchiveServer) error
+	// The response body for GET /info/refs?service=git-upload-pack
+	// Will be invoked when the user executes a `git fetch`, meaning the server
+	// will upload the packs to that user. The user doesn't upload new objects.
+	InfoRefsUploadPack(*InfoRefsRequest, Slicer_InfoRefsUploadPackServer) error
+	// The response body for GET /info/refs?service=git-receive-pack
+	// Will be invoked when the user executes a `git push`, but only advertises
+	// references to the user.
+	InfoRefsReceivePack(*InfoRefsRequest, Slicer_InfoRefsReceivePackServer) error
+	// Request and response body for POST /upload-pack
 	PostUploadPack(Slicer_PostUploadPackServer) error
+	// Request and response body for POST /receive-pack
 	PostReceivePack(Slicer_PostReceivePackServer) error
 }
 
@@ -210,8 +299,14 @@ func (UnimplementedSlicerServer) UploadPack(Slicer_UploadPackServer) error {
 func (UnimplementedSlicerServer) ReceivePack(Slicer_ReceivePackServer) error {
 	return status.Errorf(codes.Unimplemented, "method ReceivePack not implemented")
 }
-func (UnimplementedSlicerServer) AdvertiseRefs(*RefsRequest, Slicer_AdvertiseRefsServer) error {
-	return status.Errorf(codes.Unimplemented, "method AdvertiseRefs not implemented")
+func (UnimplementedSlicerServer) UploadArchive(Slicer_UploadArchiveServer) error {
+	return status.Errorf(codes.Unimplemented, "method UploadArchive not implemented")
+}
+func (UnimplementedSlicerServer) InfoRefsUploadPack(*InfoRefsRequest, Slicer_InfoRefsUploadPackServer) error {
+	return status.Errorf(codes.Unimplemented, "method InfoRefsUploadPack not implemented")
+}
+func (UnimplementedSlicerServer) InfoRefsReceivePack(*InfoRefsRequest, Slicer_InfoRefsReceivePackServer) error {
+	return status.Errorf(codes.Unimplemented, "method InfoRefsReceivePack not implemented")
 }
 func (UnimplementedSlicerServer) PostUploadPack(Slicer_PostUploadPackServer) error {
 	return status.Errorf(codes.Unimplemented, "method PostUploadPack not implemented")
@@ -283,24 +378,71 @@ func (x *slicerReceivePackServer) Recv() (*ReceivePackRequest, error) {
 	return m, nil
 }
 
-func _Slicer_AdvertiseRefs_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(RefsRequest)
+func _Slicer_UploadArchive_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SlicerServer).UploadArchive(&slicerUploadArchiveServer{stream})
+}
+
+type Slicer_UploadArchiveServer interface {
+	Send(*UploadArchiveResponse) error
+	Recv() (*UploadArchiveRequest, error)
+	grpc.ServerStream
+}
+
+type slicerUploadArchiveServer struct {
+	grpc.ServerStream
+}
+
+func (x *slicerUploadArchiveServer) Send(m *UploadArchiveResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *slicerUploadArchiveServer) Recv() (*UploadArchiveRequest, error) {
+	m := new(UploadArchiveRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Slicer_InfoRefsUploadPack_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(InfoRefsRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(SlicerServer).AdvertiseRefs(m, &slicerAdvertiseRefsServer{stream})
+	return srv.(SlicerServer).InfoRefsUploadPack(m, &slicerInfoRefsUploadPackServer{stream})
 }
 
-type Slicer_AdvertiseRefsServer interface {
-	Send(*RefsResponse) error
+type Slicer_InfoRefsUploadPackServer interface {
+	Send(*InfoRefsResponse) error
 	grpc.ServerStream
 }
 
-type slicerAdvertiseRefsServer struct {
+type slicerInfoRefsUploadPackServer struct {
 	grpc.ServerStream
 }
 
-func (x *slicerAdvertiseRefsServer) Send(m *RefsResponse) error {
+func (x *slicerInfoRefsUploadPackServer) Send(m *InfoRefsResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Slicer_InfoRefsReceivePack_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(InfoRefsRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SlicerServer).InfoRefsReceivePack(m, &slicerInfoRefsReceivePackServer{stream})
+}
+
+type Slicer_InfoRefsReceivePackServer interface {
+	Send(*InfoRefsResponse) error
+	grpc.ServerStream
+}
+
+type slicerInfoRefsReceivePackServer struct {
+	grpc.ServerStream
+}
+
+func (x *slicerInfoRefsReceivePackServer) Send(m *InfoRefsResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -377,8 +519,19 @@ var Slicer_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "AdvertiseRefs",
-			Handler:       _Slicer_AdvertiseRefs_Handler,
+			StreamName:    "UploadArchive",
+			Handler:       _Slicer_UploadArchive_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "InfoRefsUploadPack",
+			Handler:       _Slicer_InfoRefsUploadPack_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "InfoRefsReceivePack",
+			Handler:       _Slicer_InfoRefsReceivePack_Handler,
 			ServerStreams: true,
 		},
 		{

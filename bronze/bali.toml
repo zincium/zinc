@@ -1,0 +1,24 @@
+# https://toml.io/en/
+name = "zinc-bronze"
+version = "1.0.0"
+dirs = [
+    "bronze-httpd", # dirs
+]
+
+[[files]]
+path = "../LICENSE"
+destination = "share"
+newname = "copyright.txt"
+norename = true
+
+[[files]]
+path = "../config/server.crt"
+destination = "config"
+
+[[files]]
+path = "../config/server.key"
+destination = "config"
+
+[[files]]
+path = "config/bronze-httpd.toml"
+destination = "config"

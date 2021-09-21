@@ -18,11 +18,11 @@ var (
 	BUILDCOMMIT   string
 	BUILDBRANCH   string
 	GOVERSION     string
-	ServerVersion = "Zincs/" + VERSION
+	ServerVersion = "Bronze/" + VERSION
 )
 
 func version() {
-	fmt.Fprintf(os.Stdout, `zincs - Redesigned Git Over HTTP Server
+	fmt.Fprintf(os.Stdout, `bronze-httpd - Redesigned Git Over HTTP Server
 version:       %s
 build branch:  %s
 build commit:  %s
@@ -33,12 +33,12 @@ go version:    %s
 }
 
 func usage() {
-	fmt.Fprintf(os.Stdout, `zincs - Redesigned Git Over HTTP Server
+	fmt.Fprintf(os.Stdout, `bronze-httpd - Redesigned Git Over HTTP Server
 usage: %s <option> url
   -h|--help        Show usage text and quit
   -v|--version     Show version number and quit
   -V|--verbose     Make the operation more talkative
-  -p|--profile     Set profile path. default: %s\config\zincs.toml
+  -p|--profile     Set profile path. default: %s\config\bronze-httpd.toml
   -D|--daemon      Run zinc-secured as daemon   
 
 `, os.Args[0], env.AppDir())
@@ -114,7 +114,7 @@ func (opts *Options) ParseArgv() error {
 	}
 	expander := env.NewExpander()
 	if len(opts.profile) == 0 {
-		opts.profile = expander.PathExpand("${APPDIR}/config/zincs.toml")
+		opts.profile = expander.PathExpand("${APPDIR}/config/bronze-httpd.toml")
 	}
 	if err := opts.Initialize(expander); err != nil {
 		return err

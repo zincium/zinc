@@ -7,7 +7,6 @@ dirs = [
     "cmd/zinc-secured",
     "cmd/zinc-sshd",
     "cli/netcat",
-    "single/zincs",
 ]
 
 [[files]]
@@ -38,10 +37,6 @@ destination = "config"
 
 [[files]]
 path = "config/zinc.toml"
-destination = "config"
-
-[[files]]
-path = "config/zincs.toml"
 destination = "config"
 
 [[files]]

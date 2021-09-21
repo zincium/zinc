@@ -23,7 +23,7 @@ func main() {
 		os.Exit(1)
 	}
 	srv := NewServer(&opts)
-	sugar.Info("zincs listen: ", opts.Listen)
+	sugar.Info("bronze-httpd listen: ", opts.Listen)
 	if err := srv.ListenAndServe(opts.Listen); err != http.ErrServerClosed {
 		sugar.Fatalf("ListenAndServer %v", err)
 	}

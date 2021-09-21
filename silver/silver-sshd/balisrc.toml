@@ -1,0 +1,10 @@
+name = "silver-sshd"
+description = "silver-sshd - Redesigned Git Over SSH Server"
+destination = "bin"
+version = "1.0.0"
+versioninfo = "res/versioninfo.json"
+manifest = "res/silver-sshd.manifest"
+goflags = [
+    "-ldflags",
+    "-X 'main.VERSION=$BUILD_VERSION' -X 'main.BUILDTIME=$BUILD_TIME' -X 'main.BUILDBRANCH=$BUILD_BRANCH' -X 'main.BUILDCOMMIT=$BUILD_COMMIT' -X 'main.GOVERSION=$BUILD_GOVERSION'",
+]

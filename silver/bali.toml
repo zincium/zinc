@@ -1,0 +1,34 @@
+# https://toml.io/en/
+name = "zinc-silver"
+version = "1.0.0"
+dirs = ["silver-backend", "silver-httpd", "silver-sshd"]
+
+[[files]]
+path = "../LICENSE"
+destination = "share"
+newname = "copyright.txt"
+norename = true
+
+[[files]]
+path = "config/server.crt"
+destination = "config"
+
+[[files]]
+path = "config/server.key"
+destination = "config"
+
+[[files]]
+path = "config/silver-backend.toml"
+destination = "config"
+
+[[files]]
+path = "config/silver-httpd.toml"
+destination = "config"
+
+[[files]]
+path = "config/silver-sshd.toml"
+destination = "config"
+
+[[files]]
+path = "config/ssh/id_ed25519"
+destination = "config/ssh"

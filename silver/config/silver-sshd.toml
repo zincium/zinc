@@ -1,0 +1,4 @@
+# listen
+Listen = "127.0.0.1:222"
+# HostKey file
+HostKey = "${APPDIR}/ssh/id_ed25519"

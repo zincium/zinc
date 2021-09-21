@@ -60,7 +60,12 @@ func renderInternalError(w http.ResponseWriter, err error) {
 	_, _ = w.Write([]byte(err.Error()))
 }
 
-func (s *Server) doAuthFilter(w http.ResponseWriter, r *http.Request, action auth.Action) string {
+type repoResult struct {
+	RepoPath string
+	Address  string
+}
+
+func (s *Server) doAuthFilter(w http.ResponseWriter, r *http.Request, action auth.Action) *repoResult {
 	user := mux.Vars(r)["user"]
 	repo := mux.Vars(r)["repo"]
 	req := &auth.AuthRequest{
@@ -71,11 +76,11 @@ func (s *Server) doAuthFilter(w http.ResponseWriter, r *http.Request, action aut
 	resp, err := s.ac.Authorize(req)
 	if err != nil {
 		renderInternalError(w, err)
-		return ""
+		return nil
 	}
 	if !resp.Success() {
 		resp.RenderHTML(w)
-		return ""
+		return nil
 	}
 	gitdir := filepath.Join(s.root, resp.Location)
 	if !strings.HasSuffix(gitdir, ".git") {
@@ -84,9 +89,12 @@ func (s *Server) doAuthFilter(w http.ResponseWriter, r *http.Request, action aut
 	if _, err := os.Stat(gitdir); err != nil {
 		sugar.Errorf("access %s error %v", gitdir, err)
 		renderNotFound(w)
-		return ""
+		return nil
 	}
-	return gitdir
+	return &repoResult{
+		RepoPath: gitdir,
+		Address:  resp.Address,
+	}
 }
 
 func (s *Server) lookupReferences(w http.ResponseWriter, r *http.Request, serviceName string, cmd *exec.Cmd) {
@@ -117,20 +125,20 @@ func (s *Server) lookupReferences(w http.ResponseWriter, r *http.Request, servic
 }
 
 func (s *Server) handleUploadPackRefs(w http.ResponseWriter, r *http.Request) {
-	gitdir := s.doAuthFilter(w, r, auth.Download)
-	if len(gitdir) == 0 {
+	result := s.doAuthFilter(w, r, auth.Download)
+	if result == nil {
 		return
 	}
-	cmd := exec.Command(s.gitPath, "upload-pack", "--advertise-refs", "--stateless-rpc", gitdir)
+	cmd := exec.Command(s.gitPath, "upload-pack", "--advertise-refs", "--stateless-rpc", result.RepoPath)
 	s.lookupReferences(w, r, "upload-pack", cmd)
 }
 
 func (s *Server) handleReceivePackRefs(w http.ResponseWriter, r *http.Request) {
-	gitdir := s.doAuthFilter(w, r, auth.Upload)
-	if len(gitdir) == 0 {
+	result := s.doAuthFilter(w, r, auth.Upload)
+	if result == nil {
 		return
 	}
-	cmd := exec.Command(s.gitPath, "receive-pack", "--advertise-refs", "--stateless-rpc", gitdir)
+	cmd := exec.Command(s.gitPath, "receive-pack", "--advertise-refs", "--stateless-rpc", result.RepoPath)
 	s.lookupReferences(w, r, "receive-pack", cmd)
 }
 
@@ -197,20 +205,20 @@ func (s *Server) exchangeInputOutput(w http.ResponseWriter, r *http.Request, ser
 }
 
 func (s *Server) handleUploadPack(w http.ResponseWriter, r *http.Request) {
-	gitdir := s.doAuthFilter(w, r, auth.Download)
-	if len(gitdir) == 0 {
+	result := s.doAuthFilter(w, r, auth.Download)
+	if result == nil {
 		return
 	}
-	cmd := exec.Command(s.gitPath, "upload-pack", "--stateless-rpc", gitdir)
+	cmd := exec.Command(s.gitPath, "upload-pack", "--stateless-rpc", result.RepoPath)
 	s.exchangeInputOutput(w, r, "upload-pack", cmd)
 }
 
 func (s *Server) handleReceivePack(w http.ResponseWriter, r *http.Request) {
-	gitdir := s.doAuthFilter(w, r, auth.Upload)
-	if len(gitdir) == 0 {
+	result := s.doAuthFilter(w, r, auth.Upload)
+	if result == nil {
 		return
 	}
-	cmd := exec.Command(s.gitPath, "receive-pack", "--stateless-rpc", gitdir)
+	cmd := exec.Command(s.gitPath, "receive-pack", "--stateless-rpc", result.RepoPath)
 	s.exchangeInputOutput(w, r, "receive-pack", cmd)
 }
 

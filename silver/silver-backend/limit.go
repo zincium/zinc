@@ -2,6 +2,10 @@ package main
 
 import "sync"
 
+var (
+	DefaultAccessLimit = 20
+)
+
 type Limiter struct {
 	maximumAccessLimit int
 	table              map[int64]int
@@ -9,6 +13,9 @@ type Limiter struct {
 }
 
 func NewLimiter(maximumAccessLimit int) *Limiter {
+	if maximumAccessLimit <= 0 {
+		maximumAccessLimit = DefaultAccessLimit
+	}
 	return &Limiter{maximumAccessLimit: maximumAccessLimit, table: make(map[int64]int)}
 }
 

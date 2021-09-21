@@ -3,16 +3,16 @@
 
 syntax = "proto3";
 
-option go_package = "github.com/zincium/zinc/sliced";
+option go_package = "github.com/zincium/zinc/sliver/protocol";
 
-service Slicer {
-  // To forward 'git upload-pack' to zinc-sliced for SSH sessions
+service Silver {
+  // To forward 'git upload-pack' to silver-backend for SSH sessions
   // First pack stdin is nil
   rpc UploadPack(stream UploadPackRequest) returns (stream UploadPackResponse);
-  // To forward 'git receive-pack' to zinc-sliced for SSH sessions
+  // To forward 'git receive-pack' to silver-backend for SSH sessions
   // First pack stdin is nil
   rpc ReceivePack(stream ReceivePackRequest) returns (stream ReceivePackResponse);
-  // To forward 'git upload-archive' to zinc-sliced for SSH sessions
+  // To forward 'git upload-archive' to silver-backend for SSH sessions
   // First pack stdin is nil
   rpc UploadArchive(stream UploadArchiveRequest) returns (stream UploadArchiveResponse);
   // The response body for GET /info/refs?service=git-upload-pack

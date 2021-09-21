@@ -4,15 +4,15 @@ import (
 	"os"
 
 	"github.com/zincium/zinc/modules/base"
-	"github.com/zincium/zinc/sliced"
+	silver "github.com/zincium/zinc/silver/protocol"
 )
 
 type chunkFirst interface {
-	GetRepo() *sliced.Repository
+	GetRepo() *silver.Repository
 	GetStdin() []byte
 }
 
-func (s *Server) joinSanitizePath(repo *sliced.Repository) (string, error) {
+func (s *Server) joinSanitizePath(repo *silver.Repository) (string, error) {
 	repoPath, err := base.JoinSanitizePath(s.opt.Root, repo.Location)
 	if err != nil {
 		return "", err

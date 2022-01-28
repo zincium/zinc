@@ -10,7 +10,7 @@ require (
 	github.com/klauspost/compress v1.14.2
 	github.com/lucas-clemente/quic-go v0.25.0
 	github.com/pelletier/go-toml v1.9.4
-	github.com/zeebo/blake3 v0.2.1
+	github.com/zeebo/blake3 v0.2.2
 	go.uber.org/zap v1.20.0
 	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
 	google.golang.org/grpc v1.44.0

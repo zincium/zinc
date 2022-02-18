@@ -7,7 +7,7 @@ require (
 	github.com/gliderlabs/ssh v0.3.3
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/gorilla/mux v1.8.0
-	github.com/klauspost/compress v1.14.2
+	github.com/klauspost/compress v1.14.3
 	github.com/lucas-clemente/quic-go v0.25.0
 	github.com/pelletier/go-toml v1.9.4
 	github.com/zeebo/blake3 v0.2.2

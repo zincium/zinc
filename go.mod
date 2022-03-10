@@ -13,7 +13,7 @@ require (
 	github.com/zeebo/blake3 v0.2.2
 	go.uber.org/zap v1.21.0
 	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
-	google.golang.org/grpc v1.44.0
+	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.27.1
 )
 

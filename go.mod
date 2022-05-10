@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/andybalholm/brotli v1.0.4
-	github.com/gliderlabs/ssh v0.3.3
+	github.com/gliderlabs/ssh v0.3.4
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/gorilla/mux v1.8.0
 	github.com/klauspost/compress v1.15.3

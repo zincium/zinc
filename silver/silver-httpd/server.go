@@ -115,10 +115,6 @@ func (s *Server) lookupReferences(w http.ResponseWriter, r *http.Request, servic
 		return
 	}
 	w.Header().Set("Content-Type", "application/x-git-"+serviceName+"-advertisement")
-	if len(version) == 0 {
-		// smart protocol
-		fmt.Fprintf(w, "%04x# service=git-%s\n0000", len(serviceName)+4+15, serviceName)
-	}
 	if _, err := io.Copy(w, stdout); err != nil && err != io.EOF {
 		sugar.Errorf("io.Copy %v")
 	}

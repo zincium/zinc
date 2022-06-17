@@ -12,15 +12,11 @@ package protocol;
 // The balance service definition.
 service Balance {
   rpc Loadavg(LoadavgRequest) returns (LoadavgResponse) {}
-  rpc UploadPack(stream UploadPackRequest) returns (stream UploadPackResponse) {
-  }
-  rpc ReceivePack(stream ReceivePackRequest)
-      returns (stream ReceivePackResponse) {}
+  rpc UploadPack(stream UploadPackRequest) returns (stream UploadPackResponse) {}
+  rpc ReceivePack(stream ReceivePackRequest) returns (stream ReceivePackResponse) {}
   rpc LookupRefs(RefsRequest) returns (stream RefsResponse) {}
-  rpc PostUploadPack(stream PostUploadPackRequest)
-      returns (stream PostUploadPackResponse) {}
-  rpc PostReceivePack(stream PostReceivePackRequest)
-      returns (stream PostReceivePackResponse) {}
+  rpc PostUploadPack(stream PostUploadPackRequest) returns (stream PostUploadPackResponse) {}
+  rpc PostReceivePack(stream PostReceivePackRequest) returns (stream PostReceivePackResponse) {}
   rpc Negotiate(NegotiateRequest) returns (NegotiateResponse) {}
 }
 

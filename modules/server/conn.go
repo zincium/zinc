@@ -80,7 +80,7 @@ func (c *serverConn) updateDeadline() {
 
 type quicConn struct {
 	quic.Stream
-	conn quic.Session
+	conn quic.Connection
 
 	idleTimeout time.Duration
 	maxDeadline time.Time

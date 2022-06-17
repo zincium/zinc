@@ -147,7 +147,7 @@ func (srv *QuicServer) ListenAndServeQUIC(listen string, certFile, keyFile strin
 }
 
 // Handle handle
-func (srv *QuicServer) handle(conn quic.Session) error {
+func (srv *QuicServer) handle(conn quic.Connection) error {
 	sm, err := conn.AcceptStream(context.Background())
 	if err != nil {
 		return err

@@ -35,10 +35,8 @@ service Silver {
 message Repository {
   // repo id
   int64 id = 1;
-  // repoPath := filepath.Join(root, location) + ".git"
-  string location = 2;
-  // repo storage nodes
-  repeated string snapshot_storage_node = 3; // eg: n1.storage.git.io
+  // relative path not disk location
+  string relative_path = 2;
 }
 
 // Git over SSH fetch/clone request

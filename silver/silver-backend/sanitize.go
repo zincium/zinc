@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/zincium/zinc/modules/base"
@@ -13,7 +14,7 @@ type chunkFirst interface {
 }
 
 func (s *Server) joinSanitizePath(repo *silver.Repository) (string, error) {
-	repoPath, err := base.JoinSanitizePath(s.opt.Root, repo.Location)
+	repoPath, err := base.JoinSanitizePath(s.opt.Root, fmt.Sprintf("%03d/%d.git", repo.Id%1000, repo.Id))
 	if err != nil {
 		return "", err
 	}

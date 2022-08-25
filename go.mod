@@ -11,7 +11,7 @@ require (
 	github.com/lucas-clemente/quic-go v0.28.1
 	github.com/pelletier/go-toml v1.9.5
 	github.com/zeebo/blake3 v0.2.3
-	go.uber.org/zap v1.22.0
+	go.uber.org/zap v1.23.0
 	golang.org/x/net v0.0.0-20220630215102-69896b714898
 	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1

@@ -8,7 +8,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/gorilla/mux v1.8.0
 	github.com/klauspost/compress v1.15.11
-	github.com/lucas-clemente/quic-go v0.29.1
+	github.com/lucas-clemente/quic-go v0.29.2
 	github.com/pelletier/go-toml v1.9.5
 	github.com/zeebo/blake3 v0.2.3
 	go.uber.org/zap v1.23.0
@@ -25,8 +25,8 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.14 // indirect
 	github.com/marten-seemann/qpack v0.2.1 // indirect
-	github.com/marten-seemann/qtls-go1-18 v0.1.2 // indirect
-	github.com/marten-seemann/qtls-go1-19 v0.1.0 // indirect
+	github.com/marten-seemann/qtls-go1-18 v0.1.3 // indirect
+	github.com/marten-seemann/qtls-go1-19 v0.1.1 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	go.uber.org/atomic v1.9.0 // indirect

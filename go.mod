@@ -5,14 +5,14 @@ go 1.18
 require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/gliderlabs/ssh v0.3.5
-	github.com/go-git/go-git/v5 v5.4.2
+	github.com/go-git/go-git/v5 v5.5.0
 	github.com/gorilla/mux v1.8.0
 	github.com/klauspost/compress v1.15.12
 	github.com/lucas-clemente/quic-go v0.31.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/zeebo/blake3 v0.2.3
 	go.uber.org/zap v1.24.0
-	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
+	golang.org/x/net v0.2.0
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 )
@@ -30,10 +30,10 @@ require (
 	github.com/onsi/ginkgo/v2 v2.2.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/crypto v0.0.0-20220826181053-bd7e27e6170d // indirect
+	golang.org/x/crypto v0.3.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/sys v0.1.1-0.20221102194838-fc697a31fa06 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/genproto v0.0.0-20220630174209-ad1d48641aa7 // indirect

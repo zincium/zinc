@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/andybalholm/brotli v1.0.5
 	github.com/gliderlabs/ssh v0.3.5
-	github.com/go-git/go-git/v5 v5.7.0
+	github.com/go-git/go-git/v5 v5.8.0
 	github.com/gorilla/mux v1.8.0
 	github.com/klauspost/compress v1.16.7
 	github.com/lucas-clemente/quic-go v0.31.1

@@ -12,7 +12,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/zeebo/blake3 v0.2.3
 	go.uber.org/zap v1.26.0
-	golang.org/x/net v0.16.0
+	golang.org/x/net v0.17.0
 	google.golang.org/grpc v1.58.3
 	google.golang.org/protobuf v1.31.0
 )

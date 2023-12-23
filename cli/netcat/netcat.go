@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lucas-clemente/quic-go"
+	"github.com/quic-go/quic-go"
 	"github.com/zincium/zinc/modules/base"
 )
 
@@ -55,7 +55,7 @@ func ExchangeTLS(address string) {
 
 // ExchangeQUIC exchange QUIC
 func ExchangeQUIC(address string) {
-	session, err := quic.DialAddr(address, generateTLSConfig(), nil)
+	session, err := quic.DialAddr(context.Background(), address, generateTLSConfig(), nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "[QUIC] unable dial %s : %v\n", address, err)
 		os.Exit(1)

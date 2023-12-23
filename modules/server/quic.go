@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lucas-clemente/quic-go"
+	"github.com/quic-go/quic-go"
 )
 
 // QuicServer quic
@@ -18,7 +18,7 @@ type QuicServer struct {
 	MaxConnetions int //WIP
 	mu            sync.RWMutex
 	listenerWg    sync.WaitGroup
-	listeners     map[quic.Listener]struct{}
+	listeners     map[*quic.Listener]struct{}
 	conns         map[quic.Stream]struct{}
 	connWg        sync.WaitGroup
 	doneChan      chan struct{}
@@ -40,12 +40,12 @@ func (srv *QuicServer) trackConn(c quic.Stream, add bool) {
 	}
 }
 
-func (srv *QuicServer) trackListener(ln quic.Listener, add bool) {
+func (srv *QuicServer) trackListener(ln *quic.Listener, add bool) {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 
 	if srv.listeners == nil {
-		srv.listeners = make(map[quic.Listener]struct{})
+		srv.listeners = make(map[*quic.Listener]struct{})
 	}
 	if add {
 		// If the *Server is being reused after a previous
@@ -98,7 +98,7 @@ func (srv *QuicServer) closeListenersLocked() error {
 }
 
 // Serve serve
-func (srv *QuicServer) Serve(ln quic.Listener) error {
+func (srv *QuicServer) Serve(ln *quic.Listener) error {
 	srv.trackListener(ln, true)
 	defer srv.trackListener(ln, false)
 	var tempDelay time.Duration
@@ -164,7 +164,7 @@ func (srv *QuicServer) handle(conn quic.Connection) error {
 	return nil
 }
 
-//Shutdown todo
+// Shutdown todo
 func (srv *QuicServer) Shutdown(ctx context.Context) error {
 	if srv == nil {
 		return nil

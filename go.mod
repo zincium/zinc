@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/andybalholm/brotli v1.0.6
-	github.com/gliderlabs/ssh v0.3.5
+	github.com/gliderlabs/ssh v0.3.6
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/gorilla/mux v1.8.1
 	github.com/klauspost/compress v1.17.4
@@ -30,7 +30,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.11.0 // indirect
 	github.com/onsi/gomega v1.27.10 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect

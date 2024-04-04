@@ -12,7 +12,7 @@ require (
 	github.com/quic-go/quic-go v0.42.0
 	github.com/zeebo/blake3 v0.2.3
 	go.uber.org/zap v1.27.0
-	golang.org/x/net v0.22.0
+	golang.org/x/net v0.23.0
 	google.golang.org/grpc v1.63.0
 	google.golang.org/protobuf v1.33.0
 )

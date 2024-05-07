@@ -3,7 +3,7 @@ module github.com/zincium/zinc
 go 1.21
 
 require (
-	github.com/andybalholm/brotli v1.0.6
+	github.com/andybalholm/brotli v1.1.0
 	github.com/gliderlabs/ssh v0.3.7
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/gorilla/mux v1.8.1

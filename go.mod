@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/klauspost/compress v1.17.9
 	github.com/pelletier/go-toml v1.9.5
-	github.com/quic-go/quic-go v0.45.1
+	github.com/quic-go/quic-go v0.45.2
 	github.com/zeebo/blake3 v0.2.3
 	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.27.0

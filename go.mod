@@ -4,7 +4,7 @@ go 1.21
 toolchain go1.22.5
 
 require (
-	github.com/andybalholm/brotli v1.1.0
+	github.com/andybalholm/brotli v1.1.1
 	github.com/gliderlabs/ssh v0.3.7
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/gorilla/mux v1.8.1

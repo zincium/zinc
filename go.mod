@@ -5,7 +5,7 @@ toolchain go1.22.9
 
 require (
 	github.com/andybalholm/brotli v1.1.1
-	github.com/gliderlabs/ssh v0.3.7
+	github.com/gliderlabs/ssh v0.3.8
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/gorilla/mux v1.8.1
 	github.com/klauspost/compress v1.17.11
@@ -28,7 +28,7 @@ require (
 	github.com/quic-go/qpack v0.5.1 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/crypto v0.30.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect

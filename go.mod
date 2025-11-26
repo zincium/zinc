@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/klauspost/compress v1.18.1
 	github.com/pelletier/go-toml v1.9.5
-	github.com/quic-go/quic-go v0.57.0
+	github.com/quic-go/quic-go v0.57.1
 	github.com/zeebo/blake3 v0.2.4
 	go.uber.org/zap v1.27.1
 	golang.org/x/net v0.47.0

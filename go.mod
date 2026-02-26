@@ -1,8 +1,6 @@
 module github.com/zincium/zinc
 
-go 1.24.0
-
-toolchain go1.24.1
+go 1.25.0
 
 require (
 	github.com/andybalholm/brotli v1.2.0
@@ -14,7 +12,7 @@ require (
 	github.com/quic-go/quic-go v0.59.0
 	github.com/zeebo/blake3 v0.2.4
 	go.uber.org/zap v1.27.1
-	golang.org/x/net v0.50.0
+	golang.org/x/net v0.51.0
 	google.golang.org/grpc v1.79.1
 	google.golang.org/protobuf v1.36.11
 )

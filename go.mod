@@ -9,10 +9,10 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/klauspost/compress v1.18.6
 	github.com/pelletier/go-toml v1.9.5
-	github.com/quic-go/quic-go v0.59.1
+	github.com/quic-go/quic-go v0.60.0
 	github.com/zeebo/blake3 v0.2.4
 	go.uber.org/zap v1.28.0
-	golang.org/x/net v0.54.0
+	golang.org/x/net v0.55.0
 	google.golang.org/grpc v1.81.1
 	google.golang.org/protobuf v1.36.11
 )
@@ -23,7 +23,7 @@ require (
 	github.com/quic-go/qpack v0.6.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/crypto v0.51.0 // indirect
-	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260226221140-a57be14db171 // indirect
 )
